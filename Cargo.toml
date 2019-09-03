@@ -1,0 +1,8 @@
+[package]
+name = "rt-challenge"
+version = "0.1.0"
+authors = ["Mark Smith <judy@judy.co.uk>"]
+edition = "2018"
+
+[dependencies]
+float-cmp ={ version = "0.5.2", default-features = false }        # Floating point approximate comparison traits
