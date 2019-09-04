@@ -2,6 +2,9 @@ use std::cmp::PartialEq;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
+extern crate float_cmp;
+use float_cmp::ApproxEqUlps;
+
 struct Tuple(pub [f64; 4]);
 
 impl Tuple {
@@ -139,7 +142,10 @@ impl Neg for Tuple {
 
 impl PartialEq for Tuple {
     fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
+        self.x().approx_eq_ulps(&other.x(), 2)
+        && self.y().approx_eq_ulps(&other.y(), 2)
+        && self.z().approx_eq_ulps(&other.z(), 2)
+        && self.w().approx_eq_ulps(&other.w(), 2)
     }
 }
 
@@ -153,7 +159,7 @@ fn vector(x: f64, y: f64, z: f64) -> Tuple {
 }
 
 #[cfg(test)]
-mod tests {
+mod tuple_tests {
     extern crate float_cmp;
     use float_cmp::ApproxEqUlps;
 
@@ -233,8 +239,8 @@ mod tests {
     /// Comparing two tuples for equality
     fn compare_tuples() {
         assert_eq!(
-            super::Tuple::new(2., 3., -4., 5.),
-            super::Tuple::new(2., 3., -4., 5.),
+            super::Tuple::new(2., 3., -4., 0.4 * 0.1),
+            super::Tuple::new(2., 3., -4., 0.04),
         );
     }
 
