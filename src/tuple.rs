@@ -5,7 +5,7 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 extern crate float_cmp;
 use float_cmp::ApproxEqUlps;
 
-struct Tuple(pub [f64; 4]);
+pub struct Tuple(pub [f64; 4]);
 
 impl Tuple {
     fn new(x: f64, y: f64, z: f64, w: f64) -> Tuple {
