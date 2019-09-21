@@ -1,5 +1,5 @@
 [package]
-name = "rt-challenge"
+name = "rt_challenge"
 version = "0.1.0"
 authors = ["Mark Smith <judy@judy.co.uk>"]
 edition = "2018"

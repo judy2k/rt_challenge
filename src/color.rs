@@ -1,14 +1,15 @@
 use std::cmp::PartialEq;
 use std::fmt;
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, Mul, Sub};
 
 extern crate float_cmp;
 use float_cmp::ApproxEqUlps;
 
-struct Color(pub [f64; 3]);
+#[derive(Clone)]
+pub struct Color(pub [f64; 3]);
 
 impl Color {
-    fn new(r: f64, g: f64, b: f64) -> Color {
+    pub fn new(r: f64, g: f64, b: f64) -> Color {
         return Color([r, g, b]);
     }
 
