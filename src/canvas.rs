@@ -64,11 +64,10 @@ impl Canvas {
                 let pix = self.pixel_at(col, row).unwrap();
                 for i in vec![pix.red(), pix.green(), pix.blue()] {
                     let s = format!("{}", clamp_byte(i));
-                    if line.len() + s.len() > 70 {
-                        println!("Mid-row break after: {}", line);
-                        write!(&mut result, "{}", line).unwrap();
+                    if line.len() + s.len() >= 70 {
+                        writeln!(&mut result, "{}", line).unwrap();
                         line.clear();
-                        writeln!(&mut line, "{}", s).unwrap();
+                        write!(&mut line, "{}", s).unwrap();
                     } else {
                         if line.len() > 0 {
                             write!(&mut line, " ").unwrap();
@@ -78,7 +77,6 @@ impl Canvas {
                 }
             }
             if line.len() > 0 {
-                println!("Printing line: \"{}\"", line);
                 writeln!(&mut result, "{}", line).unwrap();
             }
         }
@@ -154,6 +152,43 @@ mod tests {
         assert_eq!("255 0 0 0 0 0 0 0 0 0 0 0 0 0 0", line_vec[3]);
         assert_eq!("0 0 0 0 0 0 0 128 0 0 0 0 0 0 0", line_vec[4]);
         assert_eq!("0 0 0 0 0 0 0 0 0 0 0 0 0 0 255", line_vec[5]);
+    }
+
+    #[test]
+    fn canvas_splits_long_lines() {
+        let mut c = Canvas::new(10, 2);
+        for x in 0..c.width {
+            for y in 0..c.height {
+                c.set_pixel(x, y, Color::new(1., 0.8, 0.6));
+            }
+        }
+
+        let ppm = c.to_ppm();
+        let line_vec: Vec<&str> = ppm.lines().collect();
+        assert_eq!(
+            "255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204",
+            line_vec[3]
+        );
+        assert_eq!(
+            "153 255 204 153 255 204 153 255 204 153 255 204 153",
+            line_vec[4]
+        );
+        assert_eq!(
+            "255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204",
+            line_vec[5]
+        );
+        assert_eq!(
+            "153 255 204 153 255 204 153 255 204 153 255 204 153",
+            line_vec[6]
+        );
+    }
+
+    #[test]
+    fn ppm_ends_with_newline() {
+        let c = Canvas::new(5, 3);
+
+        let ppm = c.to_ppm();
+        assert_eq!(ppm.chars().last().unwrap(), '\n');
     }
 
     #[test]
