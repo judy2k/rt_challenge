@@ -44,8 +44,8 @@ impl fmt::Debug for Color {
 impl PartialEq for Color {
     fn eq(&self, other: &Self) -> bool {
         self.red().approx_eq_ulps(&other.red(), 2)
-        && self.green().approx_eq_ulps(&other.green(), 2)
-        && self.blue().approx_eq_ulps(&other.blue(), 2)
+            && self.green().approx_eq_ulps(&other.green(), 2)
+            && self.blue().approx_eq_ulps(&other.blue(), 2)
     }
 }
 
@@ -99,7 +99,7 @@ impl Mul<f64> for Color {
 
 
 #[cfg(test)]
-mod color_tests {
+mod tests {
     #[test]
     fn new_color() {
         let c = super::Color::new(-0.5, 0.4, 1.7);

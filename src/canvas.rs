@@ -1,6 +1,7 @@
 
 use super::color::Color;
 use std::fmt::Write;
+
 struct Canvas {
     width: usize,
     height: usize,
@@ -47,21 +48,52 @@ impl Canvas {
 
     fn to_ppm(&self) -> String {
         let mut result = String::new();
-        writeln!(&mut result, "p3");
+        writeln!(&mut result, "P3").unwrap();
         writeln!(
             &mut result,
             "{width} {height}",
             width = self.width,
             height = self.height
-        );
-        writeln!(&mut result, "255");
+        )
+        .unwrap();
+        writeln!(&mut result, "255").unwrap();
+
+        for row in 0..self.height() {
+            let mut line = String::new();
+            for col in 0..self.width() {
+                let pix = self.pixel_at(col, row).unwrap();
+                for i in vec![pix.red(), pix.green(), pix.blue()] {
+                    let s = format!("{}", clamp_byte(i));
+                    if line.len() + s.len() > 70 {
+                        println!("Mid-row break after: {}", line);
+                        write!(&mut result, "{}", line).unwrap();
+                        line.clear();
+                        writeln!(&mut line, "{}", s).unwrap();
+                    } else {
+                        if line.len() > 0 {
+                            write!(&mut line, " ").unwrap();
+                        }
+                        write!(&mut line, "{}", s).unwrap();
+                    }
+                }
+            }
+            if line.len() > 0 {
+                println!("Printing line: \"{}\"", line);
+                writeln!(&mut result, "{}", line).unwrap();
+            }
+        }
 
         return result;
     }
 }
 
+fn clamp_byte(val: f64) -> u8 {
+    let result = (val * 255.).round().max(0.).min(255.);
+    result.round() as u8
+}
+
 #[cfg(test)]
-mod canvas_tests {
+mod tests {
     use super::*;
 
     #[test]
@@ -100,12 +132,39 @@ mod canvas_tests {
     }
 
     #[test]
-    fn canvas_to_ppm() {
+    fn canvas_to_ppm_header() {
         let c = Canvas::new(5, 3);
+
         let ppm = c.to_ppm();
         let mut ppm_lines = ppm.lines();
-        assert_eq!(Some("p3"), ppm_lines.next());
+        assert_eq!(Some("P3"), ppm_lines.next());
         assert_eq!(Some("5 3"), ppm_lines.next());
         assert_eq!(Some("255"), ppm_lines.next());
     }
+
+    #[test]
+    fn small_canvas_to_ppm() {
+        let mut c = Canvas::new(5, 3);
+        c.set_pixel(0, 0, Color::new(1.5, 0., 0.));
+        c.set_pixel(2, 1, Color::new(0., 0.5, 0.));
+        c.set_pixel(4, 2, Color::new(-0.5, 0., 1.));
+
+        let ppm = c.to_ppm();
+        let line_vec: Vec<&str> = ppm.lines().collect();
+        assert_eq!("255 0 0 0 0 0 0 0 0 0 0 0 0 0 0", line_vec[3]);
+        assert_eq!("0 0 0 0 0 0 0 128 0 0 0 0 0 0 0", line_vec[4]);
+        assert_eq!("0 0 0 0 0 0 0 0 0 0 0 0 0 0 255", line_vec[5]);
+    }
+
+    #[test]
+    fn test_clamp_byte() {
+        assert_eq!(128, clamp_byte(0.5));
+        assert_eq!(255, clamp_byte(1.5));
+        assert_eq!(255, clamp_byte(1.0));
+        assert_eq!(0, clamp_byte(0.0));
+        assert_eq!(0, clamp_byte(-0.5));
+        assert_eq!(0, clamp_byte(-1.0));
+        assert_eq!(0, clamp_byte(-1.5));
+    }
 }
+

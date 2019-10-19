@@ -63,7 +63,8 @@ impl Tuple {
         return vector(
             self.y() * other.z() - self.z() * other.y(),
             self.z() * other.x() - self.x() * other.z(),
-            self.x() * other.y() - self.y() * other.x());
+            self.x() * other.y() - self.y() * other.x(),
+        );
     }
 }
 
@@ -143,9 +144,9 @@ impl Neg for Tuple {
 impl PartialEq for Tuple {
     fn eq(&self, other: &Self) -> bool {
         self.x().approx_eq_ulps(&other.x(), 2)
-        && self.y().approx_eq_ulps(&other.y(), 2)
-        && self.z().approx_eq_ulps(&other.z(), 2)
-        && self.w().approx_eq_ulps(&other.w(), 2)
+            && self.y().approx_eq_ulps(&other.y(), 2)
+            && self.z().approx_eq_ulps(&other.z(), 2)
+            && self.w().approx_eq_ulps(&other.w(), 2)
     }
 }
 
@@ -159,7 +160,7 @@ fn vector(x: f64, y: f64, z: f64) -> Tuple {
 }
 
 #[cfg(test)]
-mod tuple_tests {
+mod tests {
     extern crate float_cmp;
     use float_cmp::ApproxEqUlps;
 
@@ -314,7 +315,7 @@ mod tuple_tests {
     }
 
     #[test]
-    fn cross_test(){
+    fn cross_test() {
         let a = super::vector(1., 2., 3.);
         let b = super::vector(2., 3., 4.);
         assert_eq!(a.cross(&b), super::vector(-1., 2., -1.));
