@@ -5,6 +5,7 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 extern crate float_cmp;
 use float_cmp::ApproxEqUlps;
 
+#[derive(Copy, Clone)]
 pub struct Tuple(pub [f64; 4]);
 
 impl Tuple {
@@ -32,26 +33,26 @@ impl Tuple {
         self.0[3]
     }
 
-    fn is_point(&self) -> bool {
+    pub fn is_point(&self) -> bool {
         return self.w() == 1.0;
     }
 
-    fn is_vector(&self) -> bool {
+    pub fn is_vector(&self) -> bool {
         return self.w() == 0.0;
     }
 
     #[inline]
-    fn magnitude(&self) -> f64 {
+    pub fn magnitude(&self) -> f64 {
         (self.x().powi(2) + self.y().powi(2) + self.z().powi(2) + self.w().powi(2)).sqrt()
     }
 
     #[inline]
-    fn normalize(&self) -> Tuple {
+    pub fn normalize(&self) -> Tuple {
         Tuple::new(self.x(), self.y(), self.z(), self.w()) / self.magnitude()
     }
 
     #[inline]
-    fn dot(&self, other: &Self) -> f64 {
+    pub fn dot(&self, other: &Self) -> f64 {
         return self.x() * other.x()
             + self.y() * other.y()
             + self.z() * other.z()
@@ -59,7 +60,7 @@ impl Tuple {
     }
 
     #[inline]
-    fn cross(&self, other: &Self) -> Tuple {
+    pub fn cross(&self, other: &Self) -> Tuple {
         return vector(
             self.y() * other.z() - self.z() * other.y(),
             self.z() * other.x() - self.x() * other.z(),
@@ -151,11 +152,11 @@ impl PartialEq for Tuple {
 }
 
 
-fn point(x: f64, y: f64, z: f64) -> Tuple {
+pub fn point(x: f64, y: f64, z: f64) -> Tuple {
     return Tuple::new(x, y, z, 1.0);
 }
 
-fn vector(x: f64, y: f64, z: f64) -> Tuple {
+pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
     return Tuple::new(x, y, z, 0.0);
 }
 
