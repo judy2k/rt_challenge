@@ -2,14 +2,14 @@
 use super::color::Color;
 use std::fmt::Write;
 
-struct Canvas {
+pub struct Canvas {
     width: usize,
     height: usize,
     data: Vec<Color>,
 }
 
 impl Canvas {
-    fn new(width: usize, height: usize) -> Self {
+    pub fn new(width: usize, height: usize) -> Self {
         let mut data = Vec::with_capacity(width * height);
         data.resize(width * height, Color::new(0., 0., 0.));
 
@@ -21,22 +21,22 @@ impl Canvas {
     }
 
     #[inline]
-    fn width(&self) -> usize {
+    pub fn width(&self) -> usize {
         self.width
     }
 
     #[inline]
-    fn height(&self) -> usize {
+    pub fn height(&self) -> usize {
         self.height
     }
 
     #[inline]
-    fn pixel_at(&self, x: usize, y: usize) -> Option<&Color> {
+    pub fn pixel_at(&self, x: usize, y: usize) -> Option<&Color> {
         return self.data.get(self.coords_to_index(x, y));
     }
 
     #[inline]
-    fn set_pixel(&mut self, x: usize, y: usize, value: Color) {
+    pub fn set_pixel(&mut self, x: usize, y: usize, value: Color) {
         let idx = self.coords_to_index(x, y);
         self.data[idx] = value;
     }
@@ -46,7 +46,7 @@ impl Canvas {
         y * self.width + x
     }
 
-    fn to_ppm(&self) -> String {
+    pub fn to_ppm(&self) -> String {
         let mut result = String::new();
         writeln!(&mut result, "P3").unwrap();
         writeln!(
