@@ -14,17 +14,17 @@ impl Color {
     }
 
     #[inline]
-    fn red(&self) -> f64 {
+    pub fn red(&self) -> f64 {
         self.0[0]
     }
 
     #[inline]
-    fn green(&self) -> f64 {
+    pub fn green(&self) -> f64 {
         self.0[1]
     }
 
     #[inline]
-    fn blue(&self) -> f64 {
+    pub fn blue(&self) -> f64 {
         self.0[2]
     }
 }
