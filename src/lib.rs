@@ -1,3 +1,3 @@
-mod canvas;
-mod color;
-mod tuple;
+pub mod canvas;
+pub mod color;
+pub mod tuple;
