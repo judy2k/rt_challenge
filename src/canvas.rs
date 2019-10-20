@@ -1,4 +1,3 @@
-
 use super::color::Color;
 use std::fmt::Write;
 
@@ -58,8 +57,9 @@ impl Canvas {
         .unwrap();
         writeln!(&mut result, "255").unwrap();
 
+        let mut line = String::with_capacity(self.width() * self.height() * 5);
         for row in 0..self.height() {
-            let mut line = String::new();
+            line.clear();
             for col in 0..self.width() {
                 let pix = self.pixel_at(col, row).unwrap();
                 for i in vec![pix.red(), pix.green(), pix.blue()] {
@@ -202,4 +202,3 @@ mod tests {
         assert_eq!(0, clamp_byte(-1.5));
     }
 }
-
