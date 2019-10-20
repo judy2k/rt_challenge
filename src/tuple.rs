@@ -151,7 +151,6 @@ impl PartialEq for Tuple {
     }
 }
 
-
 pub fn point(x: f64, y: f64, z: f64) -> Tuple {
     return Tuple::new(x, y, z, 1.0);
 }
@@ -172,7 +171,6 @@ mod tests {
             assert!($left.approx_eq_ulps(&$right, $precision));
         };
     }
-
 
     #[test]
     /// Testing a point tuple
@@ -253,7 +251,6 @@ mod tests {
         let v = super::vector(1., -2., 3.);
         assert_eq!(zero - v, super::vector(-1., 2., -3.));
     }
-
 
     #[test]
     /// Negating a tuple
