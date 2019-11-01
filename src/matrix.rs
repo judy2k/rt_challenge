@@ -68,6 +68,7 @@ mod tests {
         Ok(())
     }
 
+    #[test]
     fn test_2x2_matrix() -> Result<()> {
         let m = Matrix::with_values(2, 2, vec![-3., 5., 1., -2.])?;
         assert_eq!(m.value_at(0, 0), Some(&-3.0));
@@ -81,6 +82,7 @@ mod tests {
         Ok(())
     }
 
+    #[test]
     fn test_3x3_matrix() -> Result<()> {
         let m = Matrix::with_values(3, 3, vec![-3., 5., 0., 1., -2., -7., 0., 1., 1.])?;
         assert_eq!(m.value_at(0, 0), Some(&-3.0));
@@ -94,6 +96,7 @@ mod tests {
         Ok(())
     }
 
+    #[test]
     fn test_identical_matrices() -> Result<()> {
         let m1 = Matrix::with_values(
             4,
@@ -114,6 +117,7 @@ mod tests {
         Ok(())
     }
 
+    #[test]
     fn test_different_matrices() -> Result<()> {
         let m1 = Matrix::with_values(
             4,
