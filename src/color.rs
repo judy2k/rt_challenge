@@ -1,8 +1,6 @@
-use std::cmp::PartialEq;
 use std::fmt;
 use std::ops::{Add, Mul, Sub};
 
-extern crate float_cmp;
 use float_cmp::ApproxEqUlps;
 
 #[derive(Clone)]
