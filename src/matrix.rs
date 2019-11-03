@@ -1,4 +1,6 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+use float_cmp::ApproxEqUlps;
+use std::ops::Mul;
 
 #[derive(Debug)]
 pub struct Matrix {
@@ -15,17 +17,41 @@ impl Matrix {
     }
 
     pub fn with_values(rows: usize, cols: usize, values: Vec<f64>) -> Result<Self> {
-        // TODO: Validate length of values.
+        if values.len() != rows * cols {
+            return Err(anyhow!(
+                "Length of values ({}) does not match matrix dimensions ({}x{})",
+                values.len(),
+                rows,
+                cols,
+            ));
+        }
         let mut m = Self::new(rows, cols);
         m.data = values.clone();
         Ok(m)
     }
 
-    pub fn value_at(self: &Self, row: usize, col: usize) -> Option<&f64> {
+    pub fn value_at(self: &Self, row: usize, col: usize) -> Option<f64> {
         if row >= self.rows || col >= self.cols {
             return None;
         }
-        self.data.get(self.cols * row + col)
+        Some(self.data[self.cols * row + col])
+    }
+
+    pub fn set_value(self: &mut Self, row: usize, col: usize, value: f64) -> Result<()> {
+        self.data[self.cols * row + col] = value;
+        Ok(())
+    }
+
+    fn row(self, row: usize) -> Vec<f64> {
+        (0..self.cols)
+            .map(|col| self.value_at(row, col).expect("Out of bounds in row"))
+            .collect()
+    }
+
+    fn col(self, col: usize) -> Vec<f64> {
+        (0..self.rows)
+            .map(|row| self.value_at(row, col).expect("Out of bounds in col"))
+            .collect()
     }
 }
 
@@ -34,7 +60,7 @@ impl PartialEq for Matrix {
         if self.rows == other.rows && self.cols == other.cols {
             let pairs = self.data.iter().zip(other.data.iter());
             for (x, y) in pairs {
-                if x != y {
+                if !x.approx_eq_ulps(y, 2) {
                     return false;
                 }
             }
@@ -42,6 +68,44 @@ impl PartialEq for Matrix {
         }
         return false;
     }
+}
+
+impl Mul for Matrix {
+    type Output = Result<Self>;
+    fn mul(self: Self, rhs: Self) -> Result<Self> {
+        if self.cols != rhs.rows {
+            return Err(anyhow!(
+                "Matrix dimensions ({}, {}) and ({}, {}) are incompatible for multiplication.",
+                self.rows,
+                self.cols,
+                rhs.rows,
+                rhs.cols
+            ));
+        }
+        let mut result = Matrix::new(self.rows, rhs.cols);
+        for row in 0..self.rows {
+            for col in 0..rhs.cols {
+                result.set_value(row, col, calculate_cell(row, col, &self, &rhs))?;
+            }
+        }
+
+        Ok(result)
+    }
+}
+
+#[inline]
+fn calculate_cell(row: usize, col: usize, m1: &Matrix, m2: &Matrix) -> f64 {
+    (0..m1.cols)
+        .map(|col| {
+            m1.value_at(row, col)
+                .expect("Out of bounds in calculate_cell")
+        })
+        .zip((0..m2.rows).map(|row| {
+            m2.value_at(row, col)
+                .expect("Out of bounds in calculate_cell")
+        }))
+        .map(|(v1, v2)| v1 * v2)
+        .sum::<f64>()
 }
 
 #[cfg(test)]
@@ -58,23 +122,23 @@ mod tests {
             ],
         )?;
 
-        assert_eq!(m.value_at(0, 0), Some(&1.0));
-        assert_eq!(m.value_at(0, 3), Some(&4.0));
-        assert_eq!(m.value_at(1, 0), Some(&5.5));
-        assert_eq!(m.value_at(1, 2), Some(&7.5));
-        assert_eq!(m.value_at(2, 2), Some(&11.));
-        assert_eq!(m.value_at(3, 0), Some(&13.5));
-        assert_eq!(m.value_at(3, 2), Some(&15.5));
+        assert_eq!(m.value_at(0, 0), Some(1.0));
+        assert_eq!(m.value_at(0, 3), Some(4.0));
+        assert_eq!(m.value_at(1, 0), Some(5.5));
+        assert_eq!(m.value_at(1, 2), Some(7.5));
+        assert_eq!(m.value_at(2, 2), Some(11.));
+        assert_eq!(m.value_at(3, 0), Some(13.5));
+        assert_eq!(m.value_at(3, 2), Some(15.5));
         Ok(())
     }
 
     #[test]
     fn test_2x2_matrix() -> Result<()> {
         let m = Matrix::with_values(2, 2, vec![-3., 5., 1., -2.])?;
-        assert_eq!(m.value_at(0, 0), Some(&-3.0));
-        assert_eq!(m.value_at(0, 1), Some(&5.0));
-        assert_eq!(m.value_at(1, 0), Some(&1.0));
-        assert_eq!(m.value_at(1, 1), Some(&-2.0));
+        assert_eq!(m.value_at(0, 0), Some(-3.0));
+        assert_eq!(m.value_at(0, 1), Some(5.0));
+        assert_eq!(m.value_at(1, 0), Some(1.0));
+        assert_eq!(m.value_at(1, 1), Some(-2.0));
 
         assert_eq!(m.value_at(2, 0), None);
         assert_eq!(m.value_at(0, 2), None);
@@ -85,9 +149,9 @@ mod tests {
     #[test]
     fn test_3x3_matrix() -> Result<()> {
         let m = Matrix::with_values(3, 3, vec![-3., 5., 0., 1., -2., -7., 0., 1., 1.])?;
-        assert_eq!(m.value_at(0, 0), Some(&-3.0));
-        assert_eq!(m.value_at(1, 1), Some(&-2.0));
-        assert_eq!(m.value_at(2, 2), Some(&1.0));
+        assert_eq!(m.value_at(0, 0), Some(-3.0));
+        assert_eq!(m.value_at(1, 1), Some(-2.0));
+        assert_eq!(m.value_at(2, 2), Some(1.0));
 
         assert_eq!(m.value_at(3, 0), None);
         assert_eq!(m.value_at(0, 3), None);
@@ -135,6 +199,39 @@ mod tests {
         )?;
 
         assert_ne!(m1, m2);
+        Ok(())
+    }
+
+    #[test]
+    fn test_matrix_multiplication() -> Result<()> {
+        let m1 = Matrix::with_values(
+            4,
+            4,
+            vec![
+                1., 2., 3., 4., 5., 6., 7., 8., 9., 8., 7., 6., 5., 4., 3., 2.,
+            ],
+        )?;
+
+        let m2 = Matrix::with_values(
+            4,
+            4,
+            vec![
+                -2., 1., 2., 3., 3., 2., 1., -1., 4., 3., 6., 5., 1., 2., 7., 8.,
+            ],
+        )?;
+
+        assert_eq!(
+            (m1 * m2)?,
+            Matrix::with_values(
+                4,
+                4,
+                vec![
+                    20., 22., 50., 48., 44., 54., 114., 108., 40., 58., 110., 102., 16., 26., 46.,
+                    42.,
+                ],
+            )?
+        );
+
         Ok(())
     }
 }
