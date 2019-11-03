@@ -42,16 +42,25 @@ impl Matrix {
         Ok(())
     }
 
-    fn row(self, row: usize) -> Vec<f64> {
+    fn row(self: &Self, row: usize) -> Vec<f64> {
         (0..self.cols)
-            .map(|col| self.value_at(row, col).expect("Out of bounds in row"))
+            .map(|col| self.value_at(row, col).expect("Out of bounds"))
             .collect()
     }
 
-    fn col(self, col: usize) -> Vec<f64> {
+    fn col(self: &Self, col: usize) -> Vec<f64> {
         (0..self.rows)
-            .map(|row| self.value_at(row, col).expect("Out of bounds in col"))
+            .map(|row| self.value_at(row, col).expect("Out of bounds"))
             .collect()
+    }
+
+    #[inline]
+    fn calculate_cell(row: usize, col: usize, m1: &Matrix, m2: &Matrix) -> f64 {
+        m1.row(row)
+            .into_iter()
+            .zip(m2.col(col).into_iter())
+            .map(|(v1, v2)| v1 * v2)
+            .sum::<f64>()
     }
 }
 
@@ -85,27 +94,12 @@ impl Mul for Matrix {
         let mut result = Matrix::new(self.rows, rhs.cols);
         for row in 0..self.rows {
             for col in 0..rhs.cols {
-                result.set_value(row, col, calculate_cell(row, col, &self, &rhs))?;
+                result.set_value(row, col, Matrix::calculate_cell(row, col, &self, &rhs))?;
             }
         }
 
         Ok(result)
     }
-}
-
-#[inline]
-fn calculate_cell(row: usize, col: usize, m1: &Matrix, m2: &Matrix) -> f64 {
-    (0..m1.cols)
-        .map(|col| {
-            m1.value_at(row, col)
-                .expect("Out of bounds in calculate_cell")
-        })
-        .zip((0..m2.rows).map(|row| {
-            m2.value_at(row, col)
-                .expect("Out of bounds in calculate_cell")
-        }))
-        .map(|(v1, v2)| v1 * v2)
-        .sum::<f64>()
 }
 
 #[cfg(test)]
