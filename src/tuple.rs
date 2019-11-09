@@ -1,15 +1,18 @@
+use super::matrix::Matrix;
+use anyhow::{anyhow, Error};
 use std::cmp::PartialEq;
+use std::convert::TryFrom;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-extern crate float_cmp;
+//extern crate float_cmp;
 use float_cmp::ApproxEqUlps;
 
 #[derive(Copy, Clone)]
 pub struct Tuple(pub [f64; 4]);
 
 impl Tuple {
-    fn new(x: f64, y: f64, z: f64, w: f64) -> Tuple {
+    pub fn new(x: f64, y: f64, z: f64, w: f64) -> Tuple {
         return Tuple([x, y, z, w]);
     }
 
@@ -29,7 +32,7 @@ impl Tuple {
     }
 
     #[inline]
-    fn w(&self) -> f64 {
+    pub fn w(&self) -> f64 {
         self.0[3]
     }
 
@@ -66,6 +69,22 @@ impl Tuple {
             self.z() * other.x() - self.x() * other.z(),
             self.x() * other.y() - self.y() * other.x(),
         );
+    }
+}
+
+impl TryFrom<Matrix> for Tuple {
+    type Error = anyhow::Error;
+    fn try_from(m: Matrix) -> Result<Self, anyhow::Error> {
+        Ok(Tuple::new(
+            m.value_at(0, 0)
+                .ok_or(anyhow!("Invalid coordinate: 0, 0"))?,
+            m.value_at(1, 0)
+                .ok_or(anyhow!("Invalid coordinate: 1, 0"))?,
+            m.value_at(2, 0)
+                .ok_or(anyhow!("Invalid coordinate: 2, 0"))?,
+            m.value_at(3, 0)
+                .ok_or(anyhow!("Invalid coordinate: 3, 0"))?,
+        ))
     }
 }
 

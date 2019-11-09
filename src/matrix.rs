@@ -1,8 +1,10 @@
+use super::tuple::Tuple;
 use anyhow::{anyhow, Result};
 use float_cmp::ApproxEqUlps;
+use std::convert::TryInto;
 use std::ops::Mul;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Matrix {
     rows: usize,
     cols: usize,
@@ -40,6 +42,17 @@ impl Matrix {
     pub fn set_value(self: &mut Self, row: usize, col: usize, value: f64) -> Result<()> {
         self.data[self.cols * row + col] = value;
         Ok(())
+    }
+
+    pub fn identity4() -> Matrix {
+        Matrix::with_values(
+            4,
+            4,
+            vec![
+                1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
+            ],
+        )
+        .unwrap()
     }
 
     fn row(self: &Self, row: usize) -> Vec<f64> {
@@ -99,6 +112,43 @@ impl Mul for Matrix {
         }
 
         Ok(result)
+    }
+}
+
+impl Mul for &Matrix {
+    type Output = Result<Matrix>;
+    fn mul(self: Self, rhs: Self) -> Result<Matrix> {
+        if self.cols != rhs.rows {
+            return Err(anyhow!(
+                "Matrix dimensions ({}, {}) and ({}, {}) are incompatible for multiplication.",
+                self.rows,
+                self.cols,
+                rhs.rows,
+                rhs.cols
+            ));
+        }
+        let mut result = Matrix::new(self.rows, rhs.cols);
+        for row in 0..self.rows {
+            for col in 0..rhs.cols {
+                result.set_value(row, col, Matrix::calculate_cell(row, col, &self, &rhs))?;
+            }
+        }
+
+        Ok(result)
+    }
+}
+
+impl Mul<Tuple> for Matrix {
+    type Output = Tuple;
+    fn mul(self: Self, t: Tuple) -> Tuple {
+        return (self * Matrix::from(t)).unwrap().try_into().unwrap();
+    }
+}
+
+impl From<Tuple> for Matrix {
+    fn from(t: Tuple) -> Self {
+        Matrix::with_values(4, 1, vec![t.x(), t.y(), t.z(), t.w()])
+            .expect("Error creating Matrix from Tuple")
     }
 }
 
@@ -225,6 +275,37 @@ mod tests {
                 ],
             )?
         );
+
+        Ok(())
+    }
+
+    #[test]
+    fn matrix_multiplied_with_tuple() -> Result<()> {
+        let m1 = Matrix::with_values(
+            4,
+            4,
+            vec![
+                1., 2., 3., 4., 2., 4., 4., 2., 8., 6., 4., 1., 0., 0., 0., 1.,
+            ],
+        )?;
+        let t = Tuple::new(1., 2., 3., 1.);
+
+        assert_eq!(m1 * t, Tuple::new(18., 24., 33., 1.));
+
+        Ok(())
+    }
+
+    #[test]
+    fn matrix_multiplied_with_identity() -> Result<()> {
+        let m1 = Matrix::with_values(
+            4,
+            4,
+            vec![
+                0., 1., 2., 4., 1., 2., 4., 8., 2., 4., 8., 16., 4., 8., 16., 32.,
+            ],
+        )?;
+        assert_eq!((&m1 * &Matrix::identity4())?, m1);
+        assert_eq!((m1.clone() * Matrix::identity4())?, m1);
 
         Ok(())
     }
