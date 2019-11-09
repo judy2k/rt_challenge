@@ -75,6 +75,23 @@ impl Matrix {
             .map(|(v1, v2)| v1 * v2)
             .sum::<f64>()
     }
+
+    pub fn transpose(self: &Self) -> Matrix {
+        let mut result = Matrix::new(self.cols, self.rows);
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                result
+                    .set_value(
+                        col,
+                        row,
+                        self.value_at(row, col)
+                            .expect(&format!("value_at: {}, {}", row, col)),
+                    )
+                    .expect(&format!("set_value: {}, {}", col, row));
+            }
+        }
+        result
+    }
 }
 
 impl PartialEq for Matrix {
@@ -306,6 +323,29 @@ mod tests {
         )?;
         assert_eq!((&m1 * &Matrix::identity4())?, m1);
         assert_eq!((m1.clone() * Matrix::identity4())?, m1);
+
+        Ok(())
+    }
+
+    #[test]
+    fn matrix_transposition() -> Result<()> {
+        let m1 = Matrix::with_values(
+            4,
+            4,
+            vec![
+                0., 9., 3., 0., 9., 8., 0., 8., 1., 8., 5., 3., 0., 0., 5., 8.,
+            ],
+        )?;
+
+        let transposed = Matrix::with_values(
+            4,
+            4,
+            vec![
+                0., 9., 1., 0., 9., 8., 8., 0., 3., 0., 5., 5., 0., 8., 3., 8.,
+            ],
+        )?;
+
+        assert_eq!(m1.transpose(), transposed);
 
         Ok(())
     }
