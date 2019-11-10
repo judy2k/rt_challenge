@@ -95,11 +95,13 @@ impl Matrix {
 
     fn determinant(self: &Self) -> Result<f64> {
         if self.cols != 2 || self.rows != 2 {
-            Err(anyhow!(
-                "determinant is only possible for 2x2 matrices, not {}x{}",
-                self.rows,
-                self.cols
-            ))
+            let mut det: f64 = 0.0;
+
+            for col in 0..self.cols {
+                det += self.value_at(0, col).unwrap() * self.cofactor(0, col).unwrap()
+            }
+
+            Ok(det)
         } else {
             Ok(self.data[0] * self.data[3] - self.data[1] * self.data[2])
         }
@@ -152,6 +154,10 @@ impl Matrix {
 
     fn cofactor(self: &Self, row: usize, col: usize) -> Result<f64> {
         Ok(self.minor(row, col)? * if (row + col) % 2 == 1 { -1. } else { 1. })
+    }
+
+    fn invertible(self: &Self) -> Result<bool> {
+        Ok(!self.determinant()?.approx_eq_ulps(&0.0, 2))
     }
 }
 
@@ -468,6 +474,65 @@ mod tests {
         assert_eq!(a.cofactor(0, 0)?, -12.);
         assert_eq!(a.minor(1, 0)?, 25.);
         assert_eq!(a.cofactor(1, 0)?, -25.);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_determinant_3x3() -> Result<()> {
+        let a = Matrix::with_values(3, 3, vec![1., 2., 6., -5., 8., -4., 2., 6., 4.])?;
+        assert_eq!(a.cofactor(0, 0)?, 56.);
+        assert_eq!(a.cofactor(0, 1)?, 12.);
+        assert_eq!(a.cofactor(0, 2)?, -46.);
+        assert_eq!(a.determinant()?, -196.);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_determinant_4x4() -> Result<()> {
+        let a = Matrix::with_values(
+            4,
+            4,
+            vec![
+                -2., -8., 3., 5., -3., 1., 7., 3., 1., 2., -9., 6., -6., 7., 7., -9.,
+            ],
+        )?;
+        assert_eq!(a.cofactor(0, 0)?, 690.);
+        assert_eq!(a.cofactor(0, 1)?, 447.);
+        assert_eq!(a.cofactor(0, 2)?, 210.);
+        assert_eq!(a.cofactor(0, 3)?, 51.);
+        assert_eq!(a.determinant()?, -4071.);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_invertible() -> Result<()> {
+        let a = Matrix::with_values(
+            4,
+            4,
+            vec![
+                6., 4., 4., 4., 5., 5., 7., 6., 4., -9., 3., -7., 9., 1., 7., -6.,
+            ],
+        )?;
+        assert_eq!(a.determinant()?, -2120.);
+        assert_eq!(a.invertible()?, true);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_notinvertible() -> Result<()> {
+        let a = Matrix::with_values(
+            4,
+            4,
+            vec![
+                -4., 2., -2., -3., 9., 6., 2., 6., 0., -5., 1., -5., 0., 0., 0., 0.,
+            ],
+        )?;
+        assert_eq!(a.determinant()?, 0.);
+        assert_eq!(a.invertible()?, false);
 
         Ok(())
     }
