@@ -92,6 +92,18 @@ impl Matrix {
         }
         result
     }
+
+    fn determinant(self: &Self) -> Result<f64> {
+        if self.cols != 2 || self.rows != 2 {
+            Err(anyhow!(
+                "determinant is only possible for 2x2 matrices, not {}x{}",
+                self.rows,
+                self.cols
+            ))
+        } else {
+            Ok(self.data[0] * self.data[3] - self.data[1] * self.data[2])
+        }
+    }
 }
 
 impl PartialEq for Matrix {
@@ -347,6 +359,20 @@ mod tests {
 
         assert_eq!(m1.transpose(), transposed);
 
+        Ok(())
+    }
+
+    #[test]
+    fn transpose_identity_matrix() {
+        assert_eq!(Matrix::identity4().transpose(), Matrix::identity4());
+    }
+
+    #[test]
+    fn test_determinant() -> Result<()> {
+        assert_eq!(
+            Matrix::with_values(2, 2, vec![1., 5., -3., 2.])?.determinant()?,
+            17.
+        );
         Ok(())
     }
 }
