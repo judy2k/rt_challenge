@@ -104,6 +104,47 @@ impl Matrix {
             Ok(self.data[0] * self.data[3] - self.data[1] * self.data[2])
         }
     }
+
+    fn submatrix(self: &Self, remove_row: usize, remove_col: usize) -> Result<Matrix> {
+        if self.rows == 1 || self.cols == 1 {
+            return Err(anyhow!(
+                "Cannot generate a submatrix from a {}x{} matrix.",
+                self.rows,
+                self.cols
+            ));
+        }
+
+        if remove_row >= self.rows {
+            return Err(anyhow!(
+                "Cannot remove row {} from a matrix with {} rows.",
+                remove_row,
+                self.rows
+            ));
+        }
+
+        if remove_col >= self.cols {
+            return Err(anyhow!(
+                "Cannot remove col {} from a matrix with {} cols.",
+                remove_col,
+                self.cols
+            ));
+        }
+        let mut result = Matrix::new(self.rows - 1, self.cols - 1);
+        for row in 0..self.rows {
+            if row != remove_row {
+                for col in 0..self.cols {
+                    if col != remove_col {
+                        let dest_row = if row < remove_row { row } else { row - 1 };
+                        let dest_col = if col < remove_col { col } else { col - 1 };
+                        result
+                            .set_value(dest_row, dest_col, self.value_at(row, col).unwrap())
+                            .unwrap();
+                    }
+                }
+            }
+        }
+        Ok(result)
+    }
 }
 
 impl PartialEq for Matrix {
@@ -373,6 +414,16 @@ mod tests {
             Matrix::with_values(2, 2, vec![1., 5., -3., 2.])?.determinant()?,
             17.
         );
+        Ok(())
+    }
+
+    #[test]
+    fn test_submatrix() -> Result<()> {
+        let m1 = Matrix::with_values(3, 3, vec![1., 5., 0., -3., 2., 7., 0., 6., -3.])?;
+        let expected = Matrix::with_values(2, 2, vec![-3., 2., 0., 6.])?;
+
+        assert_eq!(m1.submatrix(0, 2)?, expected);
+
         Ok(())
     }
 }
