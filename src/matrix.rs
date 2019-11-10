@@ -145,6 +145,14 @@ impl Matrix {
         }
         Ok(result)
     }
+
+    fn minor(self: &Self, row: usize, col: usize) -> Result<f64> {
+        self.submatrix(row, col)?.determinant()
+    }
+
+    fn cofactor(self: &Self, row: usize, col: usize) -> Result<f64> {
+        Ok(self.minor(row, col)? * if (row + col) % 2 == 1 { -1. } else { 1. })
+    }
 }
 
 impl PartialEq for Matrix {
@@ -418,11 +426,48 @@ mod tests {
     }
 
     #[test]
-    fn test_submatrix() -> Result<()> {
+    fn test_submatrix_3x3() -> Result<()> {
         let m1 = Matrix::with_values(3, 3, vec![1., 5., 0., -3., 2., 7., 0., 6., -3.])?;
         let expected = Matrix::with_values(2, 2, vec![-3., 2., 0., 6.])?;
 
         assert_eq!(m1.submatrix(0, 2)?, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_submatrix_4x4() -> Result<()> {
+        let m1 = Matrix::with_values(
+            4,
+            4,
+            vec![
+                -6., 1., 1., 6., -8., 5., 8., 6., -1., 0., 8., 2., -7., 1., -1., 1.,
+            ],
+        )?;
+        let expected = Matrix::with_values(3, 3, vec![-6., 1., 6., -8., 8., 6., -7., -1., 1.])?;
+
+        assert_eq!(m1.submatrix(2, 1)?, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_minor() -> Result<()> {
+        let a = Matrix::with_values(3, 3, vec![3., 5., 0., 2., -1., -7., 6., -1., 5.])?;
+        let b = a.submatrix(1, 0)?;
+        assert_eq!(b.determinant()?, 25.);
+        assert_eq!(a.minor(1, 0)?, 25.);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_cofactor() -> Result<()> {
+        let a = Matrix::with_values(3, 3, vec![3., 5., 0., 2., -1., -7., 6., -1., 5.])?;
+        assert_eq!(a.minor(0, 0)?, -12.);
+        assert_eq!(a.cofactor(0, 0)?, -12.);
+        assert_eq!(a.minor(1, 0)?, 25.);
+        assert_eq!(a.cofactor(1, 0)?, -25.);
 
         Ok(())
     }
