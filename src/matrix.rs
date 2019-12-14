@@ -1,6 +1,7 @@
+use super::roughly::RoughlyEqual;
 use super::tuple::Tuple;
 use anyhow::{anyhow, Result};
-use float_cmp::ApproxEqUlps;
+use float_cmp::{ApproxEqUlps, Ulps};
 use std::convert::TryInto;
 use std::ops::Mul;
 
@@ -93,7 +94,7 @@ impl Matrix {
         result
     }
 
-    fn determinant(self: &Self) -> Result<f64> {
+    fn determinant(self: &Self) -> f64 {
         if self.cols != 2 || self.rows != 2 {
             let mut det: f64 = 0.0;
 
@@ -101,9 +102,9 @@ impl Matrix {
                 det += self.value_at(0, col).unwrap() * self.cofactor(0, col).unwrap()
             }
 
-            Ok(det)
+            det
         } else {
-            Ok(self.data[0] * self.data[3] - self.data[1] * self.data[2])
+            self.data[0] * self.data[3] - self.data[1] * self.data[2]
         }
     }
 
@@ -149,15 +150,33 @@ impl Matrix {
     }
 
     fn minor(self: &Self, row: usize, col: usize) -> Result<f64> {
-        self.submatrix(row, col)?.determinant()
+        Ok(self.submatrix(row, col)?.determinant())
     }
 
     fn cofactor(self: &Self, row: usize, col: usize) -> Result<f64> {
         Ok(self.minor(row, col)? * if (row + col) % 2 == 1 { -1. } else { 1. })
     }
 
-    fn invertible(self: &Self) -> Result<bool> {
-        Ok(!self.determinant()?.approx_eq_ulps(&0.0, 2))
+    fn invertible(self: &Self) -> bool {
+        !self.determinant().approx_eq_ulps(&0.0, 2)
+    }
+
+    fn inverse(self: &Self) -> Result<Matrix> {
+        if !self.invertible() {
+            Err(anyhow!("Cannot inverse uninvertible matrix."))
+        } else {
+            let self_determinant = self.determinant();
+            let mut m2 = Matrix::new(self.rows, self.cols);
+
+            for row in 0..self.rows {
+                for col in 0..self.cols {
+                    let c = self.cofactor(row, col)?;
+                    m2.set_value(col, row, c / self_determinant)?;
+                }
+            }
+
+            Ok(m2)
+        }
     }
 }
 
@@ -173,6 +192,40 @@ impl PartialEq for Matrix {
             return true;
         }
         return false;
+    }
+}
+
+impl RoughlyEqual for Matrix {
+    fn roughly_equal(&self, other: &Matrix) -> bool {
+        if self.rows == other.rows && self.cols == other.cols {
+            let pairs = self.data.iter().zip(other.data.iter());
+            for (x, y) in pairs {
+                if !x.roughly_equal(y) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+}
+
+impl ApproxEqUlps for Matrix {
+    type Flt = f64;
+
+    fn approx_eq_ulps(&self, other: &Self, ulps: <Self::Flt as Ulps>::U) -> bool {
+        if self.rows != other.rows || self.cols != other.cols {
+            false
+        } else {
+            self.data.iter().zip(other.data.iter()).all(|(a, b)| {
+                print!("Comparing: {} with {}", a, b);
+                a.approx_eq_ulps(b, ulps)
+            })
+        }
+    }
+
+    fn approx_ne_ulps(&self, other: &Self, ulps: <Self::Flt as Ulps>::U) -> bool {
+        !self.approx_eq_ulps(other, ulps)
     }
 }
 
@@ -239,6 +292,14 @@ impl From<Tuple> for Matrix {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(test)]
+    /// Check if two floats are approximately equal
+    macro_rules! assert_float_eq {
+        ($left: expr, $right: expr) => {
+            assert!($left.roughly_equal(&$right));
+        };
+    }
 
     #[test]
     fn test_4x4_matrix() -> Result<()> {
@@ -425,7 +486,7 @@ mod tests {
     #[test]
     fn test_determinant() -> Result<()> {
         assert_eq!(
-            Matrix::with_values(2, 2, vec![1., 5., -3., 2.])?.determinant()?,
+            Matrix::with_values(2, 2, vec![1., 5., -3., 2.])?.determinant(),
             17.
         );
         Ok(())
@@ -461,7 +522,7 @@ mod tests {
     fn test_minor() -> Result<()> {
         let a = Matrix::with_values(3, 3, vec![3., 5., 0., 2., -1., -7., 6., -1., 5.])?;
         let b = a.submatrix(1, 0)?;
-        assert_eq!(b.determinant()?, 25.);
+        assert_eq!(b.determinant(), 25.);
         assert_eq!(a.minor(1, 0)?, 25.);
 
         Ok(())
@@ -484,7 +545,7 @@ mod tests {
         assert_eq!(a.cofactor(0, 0)?, 56.);
         assert_eq!(a.cofactor(0, 1)?, 12.);
         assert_eq!(a.cofactor(0, 2)?, -46.);
-        assert_eq!(a.determinant()?, -196.);
+        assert_eq!(a.determinant(), -196.);
 
         Ok(())
     }
@@ -502,7 +563,7 @@ mod tests {
         assert_eq!(a.cofactor(0, 1)?, 447.);
         assert_eq!(a.cofactor(0, 2)?, 210.);
         assert_eq!(a.cofactor(0, 3)?, 51.);
-        assert_eq!(a.determinant()?, -4071.);
+        assert_eq!(a.determinant(), -4071.);
 
         Ok(())
     }
@@ -516,8 +577,8 @@ mod tests {
                 6., 4., 4., 4., 5., 5., 7., 6., 4., -9., 3., -7., 9., 1., 7., -6.,
             ],
         )?;
-        assert_eq!(a.determinant()?, -2120.);
-        assert_eq!(a.invertible()?, true);
+        assert_eq!(a.determinant(), -2120.);
+        assert_eq!(a.invertible(), true);
 
         Ok(())
     }
@@ -531,9 +592,49 @@ mod tests {
                 -4., 2., -2., -3., 9., 6., 2., 6., 0., -5., 1., -5., 0., 0., 0., 0.,
             ],
         )?;
-        assert_eq!(a.determinant()?, 0.);
-        assert_eq!(a.invertible()?, false);
+        assert_eq!(a.determinant(), 0.);
+        assert_eq!(a.invertible(), false);
 
         Ok(())
+    }
+
+    #[test]
+    fn test_inverse() -> Result<()> {
+        let a = Matrix::with_values(
+            4,
+            4,
+            vec![
+                -5., 2., 6., -8., 1., -5., 1., 8., 7., 7., -6., -7., 1., -3., 7., 4.,
+            ],
+        )?;
+        let b = a.inverse()?;
+
+        assert_eq!(a.determinant(), 532.);
+        assert_float_eq!(a.cofactor(2, 3)?, -160.);
+        assert_float_eq!(b.value_at(3, 2).unwrap(), -160. / 532.);
+        assert_float_eq!(a.cofactor(3, 2)?, 105.);
+        assert_float_eq!(b.value_at(2, 3).unwrap(), 105. / 532.);
+
+        assert_float_eq!(
+            b,
+            Matrix::with_values(
+                4,
+                4,
+                vec![
+                    0.21805, 0.45113, 0.24060, -0.04511, -0.80827, -1.45677, -0.44361, 0.52068,
+                    -0.07895, -0.22368, -0.05263, 0.19737, -0.52256, -0.81391, -0.30075, 0.30639
+                ]
+            )?
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_approx_eq() {
+        println!("Ulps: {}", 0.21804511278195488_f64.ulps(&0.21805_f64));
+        assert_float_eq!(0.21804511278195488_f64, 0.21805_f64);
+        println!("Ulps: {}", -0.045112781954887216_f64.ulps(&-0.04511_f64));
+        assert_float_eq!(-0.045112781954887216_f64, -0.04511_f64);
     }
 }

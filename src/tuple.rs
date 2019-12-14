@@ -1,5 +1,5 @@
 use super::matrix::Matrix;
-use anyhow::{anyhow, Error};
+use anyhow::anyhow;
 use std::cmp::PartialEq;
 use std::convert::TryFrom;
 use std::fmt;
