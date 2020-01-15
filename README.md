@@ -6,3 +6,7 @@ deepening my knowledge of Rust programming.
 If you've stumbled on this repository by accident, I'd highly recommend you buy
 a copy of the book and work through it yourself in whichever programming language
 you prefer, instead of reading or re-using this code.
+
+## Hey look, I rendered something
+
+![A projectile's path, modelled with matrix math](projectile.png)
