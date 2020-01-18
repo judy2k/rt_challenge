@@ -9,4 +9,4 @@ you prefer, instead of reading or re-using this code.
 
 ## Hey look, I rendered something
 
-![A projectile's path, modelled with matrix math](projectile.png)
+![A projectile's path, modelled with matrix math](tests/projectile.png)
