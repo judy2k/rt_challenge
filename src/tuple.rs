@@ -1,12 +1,10 @@
 use super::matrix::Matrix;
+use crate::roughly::RoughlyEqual;
 use anyhow::anyhow;
 use std::cmp::PartialEq;
 use std::convert::TryFrom;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
-
-//extern crate float_cmp;
-use float_cmp::ApproxEqUlps;
 
 #[derive(Copy, Clone)]
 pub struct Tuple(pub [f64; 4]);
@@ -163,10 +161,10 @@ impl Neg for Tuple {
 
 impl PartialEq for Tuple {
     fn eq(&self, other: &Self) -> bool {
-        self.x().approx_eq_ulps(&other.x(), 2)
-            && self.y().approx_eq_ulps(&other.y(), 2)
-            && self.z().approx_eq_ulps(&other.z(), 2)
-            && self.w().approx_eq_ulps(&other.w(), 2)
+        self.x().roughly_equal(&other.x())
+            && self.y().roughly_equal(&other.y())
+            && self.z().roughly_equal(&other.z())
+            && self.w().roughly_equal(&other.w())
     }
 }
 

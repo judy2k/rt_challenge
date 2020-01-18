@@ -29,7 +29,7 @@ impl Matrix {
             ));
         }
         let mut m = Self::new(rows, cols);
-        m.data = values.clone();
+        m.data = values;
         Ok(m)
     }
 
@@ -178,6 +178,102 @@ impl Matrix {
             Ok(m2)
         }
     }
+
+    pub fn translation(x: f64, y: f64, z: f64) -> Self {
+        Matrix::with_values(
+            4,
+            4,
+            vec![1., 0., 0., x, 0., 1., 0., y, 0., 0., 1., z, 0., 0., 0., 1.],
+        )
+        .unwrap()
+    }
+
+    pub fn scaling(x: f64, y: f64, z: f64) -> Self {
+        Matrix::with_values(
+            4,
+            4,
+            vec![x, 0., 0., 0., 0., y, 0., 0., 0., 0., z, 0., 0., 0., 0., 1.],
+        )
+        .unwrap()
+    }
+
+    pub fn rotation_x(r: f64) -> Self {
+        Matrix::with_values(
+            4,
+            4,
+            vec![
+                1.,
+                0.,
+                0.,
+                0.,
+                0.,
+                r.cos(),
+                -r.sin(),
+                0.,
+                0.,
+                r.sin(),
+                r.cos(),
+                0.,
+                0.,
+                0.,
+                0.,
+                1.,
+            ],
+        )
+        .unwrap()
+    }
+
+    pub fn rotation_y(r: f64) -> Self {
+        Matrix::with_values(
+            4,
+            4,
+            vec![
+                r.cos(),
+                0.,
+                r.sin(),
+                0.,
+                0.,
+                1.,
+                0.,
+                0.,
+                -r.sin(),
+                0.,
+                r.cos(),
+                0.,
+                0.,
+                0.,
+                0.,
+                1.,
+            ],
+        )
+        .unwrap()
+    }
+
+    pub fn rotation_z(r: f64) -> Self {
+        Matrix::with_values(
+            4,
+            4,
+            vec![
+                r.cos(),
+                -r.sin(),
+                0.,
+                0.,
+                r.sin(),
+                r.cos(),
+                0.,
+                0.,
+                0.,
+                0.,
+                1.,
+                0.,
+                0.,
+                0.,
+                0.,
+                1.,
+            ],
+        )
+        .unwrap()
+    }
 }
 
 impl PartialEq for Matrix {
@@ -292,8 +388,9 @@ impl From<Tuple> for Matrix {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tuple::{point, vector};
+    use std::f64::consts::PI;
 
-    #[cfg(test)]
     /// Check if two floats are approximately equal
     macro_rules! assert_float_eq {
         ($left: expr, $right: expr) => {
@@ -636,5 +733,100 @@ mod tests {
         assert_float_eq!(0.21804511278195488_f64, 0.21805_f64);
         println!("Ulps: {}", -0.045112781954887216_f64.ulps(&-0.04511_f64));
         assert_float_eq!(-0.045112781954887216_f64, -0.04511_f64);
+    }
+
+    #[test]
+    fn test_translation() {
+        let transform = Matrix::translation(5., -3., 2.);
+        let p = point(-3., 4., 5.);
+        assert_eq!(transform * p, point(2., 1., 7.));
+    }
+
+    #[test]
+    fn test_translation_inverse() {
+        let transform = Matrix::translation(5., -3., 2.).inverse().unwrap();
+        let p = point(-3., 4., 5.);
+        assert_eq!(transform * p, point(-8., 7., 3.));
+    }
+
+    #[test]
+    fn test_translation_doesnt_affect_vectors() {
+        let transform = Matrix::translation(5., -3., 2.);
+        let v = vector(-3., 4., 5.);
+        assert_eq!(transform * v, v);
+    }
+
+    #[test]
+    fn test_scaling_point() {
+        let transform = Matrix::scaling(2., 3., 4.);
+        let p = point(-4., 6., 8.);
+        assert_eq!(transform * p, point(-8., 18., 32.));
+    }
+
+    #[test]
+    fn test_scaling_vector() {
+        let transform = Matrix::scaling(2., 3., 4.);
+        let v = vector(-4., 6., 8.);
+        assert_eq!(transform * v, vector(-8., 18., 32.));
+    }
+
+    #[test]
+    fn test_scaling_inverse() {
+        let transform = Matrix::scaling(2., 3., 4.).inverse().unwrap();
+        let v = vector(-4., 6., 8.);
+        assert_eq!(transform * v, vector(-2., 2., 2.));
+    }
+
+    #[test]
+    fn test_reflection() {
+        let transform = Matrix::scaling(-1., 1., 1.);
+        let p = point(2., 3., 4.);
+        assert_eq!(transform * p, point(-2., 3., 4.));
+    }
+
+    #[test]
+    fn test_rotation_x() {
+        let p = point(0., 1., 0.);
+        let half_quarter = Matrix::rotation_x(PI / 4.);
+        let full_quarter = Matrix::rotation_x(PI / 2.);
+        assert_eq!(
+            half_quarter * p,
+            point(0., 2_f64.sqrt() / 2., 2_f64.sqrt() / 2.)
+        );
+        assert_eq!(full_quarter * p, point(0., 0., 1.));
+    }
+
+    #[test]
+    fn test_rotation_x_inverse() {
+        let p = point(0., 1., 0.);
+        let half_quarter = Matrix::rotation_x(PI / 4.).inverse().unwrap();
+        assert_eq!(
+            half_quarter * p,
+            point(0., 2_f64.sqrt() / 2., -2_f64.sqrt() / 2.)
+        );
+    }
+
+    #[test]
+    fn test_rotation_y() {
+        let p = point(0., 0., 1.);
+        let half_quarter = Matrix::rotation_y(PI / 4.);
+        let full_quarter = Matrix::rotation_y(PI / 2.);
+        assert_eq!(
+            half_quarter * p,
+            point(2_f64.sqrt() / 2., 0., 2_f64.sqrt() / 2.)
+        );
+        assert_eq!(full_quarter * p, point(1., 0., 0.));
+    }
+
+    #[test]
+    fn test_rotation_z() {
+        let p = point(0., 1., 0.);
+        let half_quarter = Matrix::rotation_z(PI / 4.);
+        let full_quarter = Matrix::rotation_z(PI / 2.);
+        assert_eq!(
+            half_quarter * p,
+            point(-2_f64.sqrt() / 2., 2_f64.sqrt() / 2., 0.)
+        );
+        assert_eq!(full_quarter * p, point(-1., 0., 0.));
     }
 }
