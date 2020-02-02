@@ -39,9 +39,8 @@ impl Matrix {
         self.data[self.cols * row + col]
     }
 
-    pub fn set_value(self: &mut Self, row: usize, col: usize, value: f64) -> Result<()> {
+    pub fn set_value(self: &mut Self, row: usize, col: usize, value: f64) {
         self.data[self.cols * row + col] = value;
-        Ok(())  // TODO: Get rid of this.
     }
 
     pub fn identity4() -> Matrix {
@@ -85,7 +84,6 @@ impl Matrix {
                         row,
                         self.value_at(row, col),
                     )
-                    .expect(&format!("set_value: {}, {}", col, row));
             }
         }
         result
@@ -167,7 +165,7 @@ impl Matrix {
             for row in 0..self.rows {
                 for col in 0..self.cols {
                     let c = self.cofactor(row, col)?;
-                    m2.set_value(col, row, c / self_determinant)?;
+                    m2.set_value(col, row, c / self_determinant);
                 }
             }
 
@@ -344,7 +342,7 @@ impl Mul for Matrix {
         let mut result = Matrix::new(self.rows, rhs.cols);
         for row in 0..self.rows {
             for col in 0..rhs.cols {
-                result.set_value(row, col, Matrix::calculate_cell(row, col, &self, &rhs))?;
+                result.set_value(row, col, Matrix::calculate_cell(row, col, &self, &rhs));
             }
         }
 
@@ -367,7 +365,7 @@ impl Mul for &Matrix {
         let mut result = Matrix::new(self.rows, rhs.cols);
         for row in 0..self.rows {
             for col in 0..rhs.cols {
-                result.set_value(row, col, Matrix::calculate_cell(row, col, &self, &rhs))?;
+                result.set_value(row, col, Matrix::calculate_cell(row, col, &self, &rhs));
             }
         }
 
