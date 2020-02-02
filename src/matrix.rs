@@ -41,7 +41,7 @@ impl Matrix {
 
     pub fn set_value(self: &mut Self, row: usize, col: usize, value: f64) -> Result<()> {
         self.data[self.cols * row + col] = value;
-        Ok(())
+        Ok(())  // TODO: Get rid of this.
     }
 
     pub fn identity4() -> Matrix {
@@ -262,6 +262,19 @@ impl Matrix {
                 0.,
                 0.,
                 1.,
+            ],
+        )
+    }
+
+    pub fn shearing(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Self {
+        Matrix::with_values(
+            4,
+            4,
+            vec![
+                1., xy, xz, 0.,   // Row 0
+                yx, 1., yz, 0.,   // Row 1
+                zx, zy, 1., 0.,   // Row 2
+                0., 0., 0., 1.,     // Row 3
             ],
         )
     }
@@ -856,5 +869,47 @@ mod tests {
             point(-2_f64.sqrt() / 2., 2_f64.sqrt() / 2., 0.)
         );
         assert_eq!(full_quarter * p, point(-1., 0., 0.));
+    }
+
+    #[test]
+    fn test_shearing_xy() {
+        let t = Matrix::shearing(1., 0., 0., 0., 0., 0.);
+        let p = point(2., 3., 4.);
+        assert_eq!(t * p, point(5., 3., 4.))
+    }
+
+    #[test]
+    fn test_shearing_xz() {
+        let t = Matrix::shearing(0., 1., 0., 0., 0., 0.);
+        let p = point(2., 3., 4.);
+        assert_eq!(t * p, point(6., 3., 4.))
+    }
+
+    #[test]
+    fn test_shearing_yx() {
+        let t = Matrix::shearing(0., 0., 1., 0., 0., 0.);
+        let p = point(2., 3., 4.);
+        assert_eq!(t * p, point(2., 5., 4.))
+    }
+
+    #[test]
+    fn test_shearing_yz() {
+        let t = Matrix::shearing(0., 0., 0., 1., 0., 0.);
+        let p = point(2., 3., 4.);
+        assert_eq!(t * p, point(2., 7., 4.))
+    }
+
+    #[test]
+    fn test_shearing_zx() {
+        let t = Matrix::shearing(0., 0., 0., 0., 1., 0.);
+        let p = point(2., 3., 4.);
+        assert_eq!(t * p, point(2., 3., 6.))
+    }
+
+    #[test]
+    fn test_shearing_zy() {
+        let t = Matrix::shearing(0., 0., 0., 0., 0., 1.);
+        let p = point(2., 3., 4.);
+        assert_eq!(t * p, point(2., 3., 7.))
     }
 }
