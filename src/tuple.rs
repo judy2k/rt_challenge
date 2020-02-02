@@ -1,6 +1,5 @@
 use super::matrix::Matrix;
 use crate::roughly::RoughlyEqual;
-use anyhow::anyhow;
 use std::cmp::PartialEq;
 use std::convert::TryFrom;
 use std::fmt;
