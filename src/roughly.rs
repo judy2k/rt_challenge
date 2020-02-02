@@ -13,6 +13,8 @@ impl RoughlyEqual for f64 {
 #[cfg(test)]
 mod test {
     use super::*;
+    
+    #[test]
     fn test_f64_roughly_equal() {
         assert!(1.000005_f64.roughly_equal(&1.000000_f64))
     }
