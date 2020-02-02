@@ -2,8 +2,8 @@ use super::roughly::RoughlyEqual;
 use super::tuple::Tuple;
 use anyhow::{anyhow, Result};
 use float_cmp::{ApproxEqUlps, Ulps};
-use std::convert::TryInto;
 use std::ops::Mul;
+use std::convert::TryInto;
 
 #[derive(Clone, Debug)]
 pub struct Matrix {
@@ -328,16 +328,16 @@ impl ApproxEqUlps for Matrix {
 }
 
 impl Mul for Matrix {
-    type Output = Result<Self>;
-    fn mul(self: Self, rhs: Self) -> Result<Self> {
+    type Output = Self;
+    fn mul(self: Self, rhs: Self) -> Self {
         if self.cols != rhs.rows {
-            return Err(anyhow!(
+            panic!(
                 "Matrix dimensions ({}, {}) and ({}, {}) are incompatible for multiplication.",
                 self.rows,
                 self.cols,
                 rhs.rows,
                 rhs.cols
-            ));
+            );
         }
         let mut result = Matrix::new(self.rows, rhs.cols);
         for row in 0..self.rows {
@@ -346,7 +346,7 @@ impl Mul for Matrix {
             }
         }
 
-        Ok(result)
+        result
     }
 }
 
@@ -376,7 +376,7 @@ impl Mul for &Matrix {
 impl Mul<Tuple> for Matrix {
     type Output = Tuple;
     fn mul(self: Self, t: Tuple) -> Tuple {
-        return (self * Matrix::from(t)).unwrap().try_into().unwrap();
+        return (self * Matrix::from(t)).into();
     }
 }
 
@@ -546,7 +546,7 @@ mod tests {
         );
 
         assert_eq!(
-            (m1 * m2)?,
+            (m1 * m2),
             Matrix::with_values(
                 4,
                 4,
@@ -586,7 +586,7 @@ mod tests {
             ],
         );
         assert_eq!((&m1 * &Matrix::identity4())?, m1);
-        assert_eq!((m1.clone() * Matrix::identity4())?, m1);
+        assert_eq!((m1.clone() * Matrix::identity4()), m1);
 
         Ok(())
     }
@@ -909,5 +909,33 @@ mod tests {
         let t = Matrix::shearing(0., 0., 0., 0., 0., 1.);
         let p = point(2., 3., 4.);
         assert_eq!(t * p, point(2., 3., 7.))
+    }
+
+    #[test]
+    fn test_transformations_in_sequence() {
+        let p = point(1., 0., 1.);
+        let a = Matrix::rotation_x(PI / 2.);
+        let b = Matrix::scaling(5., 5., 5.);
+        let c = Matrix::translation(10., 5., 7.);
+
+        let p2 = a * p;
+        assert_eq!(p2, point(1., -1., 0.));
+
+        let p3 = b * p2;
+        assert_eq!(p3, point(5., -5., 0.));
+
+        let p4 = c * p3;
+        assert_eq!(p4, point(15., 0., 7.));
+    }
+
+    #[test]
+    fn test_chained_transformations() {
+        let p = point(1., 0., 1.);
+        let a = Matrix::rotation_x(PI / 2.);
+        let b = Matrix::scaling(5., 5., 5.);
+        let c = Matrix::translation(10., 5., 7.);
+
+        let t = c * b * a;
+        assert_eq!(t * p, point(15., 0., 7.));
     }
 }
