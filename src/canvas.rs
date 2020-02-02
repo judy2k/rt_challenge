@@ -1,4 +1,4 @@
-use super::color::Color;
+use crate::color::Color;
 use std::fmt::Write;
 
 pub struct Canvas {

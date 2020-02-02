@@ -1,4 +1,4 @@
-use super::matrix::Matrix;
+use crate::matrix::Matrix;
 use crate::roughly::RoughlyEqual;
 use std::cmp::PartialEq;
 use std::convert::TryFrom;
