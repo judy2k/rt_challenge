@@ -72,16 +72,13 @@ impl Tuple {
 
 impl TryFrom<Matrix> for Tuple {
     type Error = anyhow::Error;
+    // TODO - can switch to From<Matrix> impl.
     fn try_from(m: Matrix) -> Result<Self, anyhow::Error> {
         Ok(Tuple::new(
-            m.value_at(0, 0)
-                .ok_or(anyhow!("Invalid coordinate: 0, 0"))?,
-            m.value_at(1, 0)
-                .ok_or(anyhow!("Invalid coordinate: 1, 0"))?,
-            m.value_at(2, 0)
-                .ok_or(anyhow!("Invalid coordinate: 2, 0"))?,
-            m.value_at(3, 0)
-                .ok_or(anyhow!("Invalid coordinate: 3, 0"))?,
+            m.value_at(0, 0),
+            m.value_at(1, 0),
+            m.value_at(2, 0),
+            m.value_at(3, 0),
         ))
     }
 }

@@ -33,11 +33,10 @@ impl Matrix {
         m
     }
 
-    pub fn value_at(self: &Self, row: usize, col: usize) -> Option<f64> {
-        if row >= self.rows || col >= self.cols {
-            return None;
-        }
-        Some(self.data[self.cols * row + col])
+    pub fn value_at(self: &Self, row: usize, col: usize) -> f64 {
+        assert!(row < self.rows, "row ({}) must be less than the number of rows ({})", row, self.rows);
+        assert!(col < self.cols, "col ({}) must be less than the number of cols ({})", col, self.cols);
+        self.data[self.cols * row + col]
     }
 
     pub fn set_value(self: &mut Self, row: usize, col: usize, value: f64) -> Result<()> {
@@ -57,13 +56,13 @@ impl Matrix {
 
     fn row(self: &Self, row: usize) -> Vec<f64> {
         (0..self.cols)
-            .map(|col| self.value_at(row, col).expect("Out of bounds"))
+            .map(|col| self.value_at(row, col))
             .collect()
     }
 
     fn col(self: &Self, col: usize) -> Vec<f64> {
         (0..self.rows)
-            .map(|row| self.value_at(row, col).expect("Out of bounds"))
+            .map(|row| self.value_at(row, col))
             .collect()
     }
 
@@ -84,8 +83,7 @@ impl Matrix {
                     .set_value(
                         col,
                         row,
-                        self.value_at(row, col)
-                            .expect(&format!("value_at: {}, {}", row, col)),
+                        self.value_at(row, col),
                     )
                     .expect(&format!("set_value: {}, {}", col, row));
             }
@@ -98,7 +96,7 @@ impl Matrix {
             let mut det: f64 = 0.0;
 
             for col in 0..self.cols {
-                det += self.value_at(0, col).unwrap() * self.cofactor(0, col).unwrap()
+                det += self.value_at(0, col) * self.cofactor(0, col).expect("Whaaaat?")
             }
 
             det
@@ -139,8 +137,7 @@ impl Matrix {
                         let dest_row = if row < remove_row { row } else { row - 1 };
                         let dest_col = if col < remove_col { col } else { col - 1 };
                         result
-                            .set_value(dest_row, dest_col, self.value_at(row, col).unwrap())
-                            .unwrap();
+                            .set_value(dest_row, dest_col, self.value_at(row, col));
                     }
                 }
             }
@@ -401,42 +398,80 @@ mod tests {
             ],
         );
 
-        assert_eq!(m.value_at(0, 0), Some(1.0));
-        assert_eq!(m.value_at(0, 3), Some(4.0));
-        assert_eq!(m.value_at(1, 0), Some(5.5));
-        assert_eq!(m.value_at(1, 2), Some(7.5));
-        assert_eq!(m.value_at(2, 2), Some(11.));
-        assert_eq!(m.value_at(3, 0), Some(13.5));
-        assert_eq!(m.value_at(3, 2), Some(15.5));
+        assert_eq!(m.value_at(0, 0), 1.0);
+        assert_eq!(m.value_at(0, 3), 4.0);
+        assert_eq!(m.value_at(1, 0), 5.5);
+        assert_eq!(m.value_at(1, 2), 7.5);
+        assert_eq!(m.value_at(2, 2), 11.);
+        assert_eq!(m.value_at(3, 0), 13.5);
+        assert_eq!(m.value_at(3, 2), 15.5);
         Ok(())
     }
 
     #[test]
-    fn test_2x2_matrix() -> Result<()> {
+    fn test_2x2_matrix() {
         let m = Matrix::with_values(2, 2, vec![-3., 5., 1., -2.]);
-        assert_eq!(m.value_at(0, 0), Some(-3.0));
-        assert_eq!(m.value_at(0, 1), Some(5.0));
-        assert_eq!(m.value_at(1, 0), Some(1.0));
-        assert_eq!(m.value_at(1, 1), Some(-2.0));
-
-        assert_eq!(m.value_at(2, 0), None);
-        assert_eq!(m.value_at(0, 2), None);
-
-        Ok(())
+        assert_eq!(m.value_at(0, 0), -3.0);
+        assert_eq!(m.value_at(0, 1), 5.0);
+        assert_eq!(m.value_at(1, 0), 1.0);
+        assert_eq!(m.value_at(1, 1), -2.0);
     }
 
     #[test]
-    fn test_3x3_matrix() -> Result<()> {
+    #[should_panic]
+    fn test_2x2_matrix_bounds_panic1() {
+        let m = Matrix::with_values(2, 2, vec![-3., 5., 1., -2.]);
+        
+        m.value_at(2, 0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_2x2_matrix_bounds_panic2() {
+        let m = Matrix::with_values(2, 2, vec![-3., 5., 1., -2.]);
+        
+        let v = m.value_at(0, 2);
+        println!("V is {}", v);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_2x2_matrix_bounds_panic3() {
+        let m = Matrix::with_values(2, 2, vec![-3., 5., 1., -2.]);
+        
+        m.value_at(2, 2);
+    }
+
+    #[test]
+    fn test_3x3_matrix() {
         let m = Matrix::with_values(3, 3, vec![-3., 5., 0., 1., -2., -7., 0., 1., 1.]);
-        assert_eq!(m.value_at(0, 0), Some(-3.0));
-        assert_eq!(m.value_at(1, 1), Some(-2.0));
-        assert_eq!(m.value_at(2, 2), Some(1.0));
+        assert_eq!(m.value_at(0, 0), -3.0);
+        assert_eq!(m.value_at(1, 1), -2.0);
+        assert_eq!(m.value_at(2, 2), 1.0);
+    }
 
-        assert_eq!(m.value_at(3, 0), None);
-        assert_eq!(m.value_at(0, 3), None);
-        assert_eq!(m.value_at(3, 3), None);
+    #[test]
+    #[should_panic]
+    fn test_3x3_matrix_bounds_panic1() {
+        let m = Matrix::with_values(3, 3, vec![-3., 5., 0., 1., -2., -7., 0., 1., 1.]);
+        
+        m.value_at(3, 0);
+    }
 
-        Ok(())
+    #[test]
+    #[should_panic]
+    fn test_3x3_matrix_bounds_panic2() {
+        let m = Matrix::with_values(3, 3, vec![-3., 5., 0., 1., -2., -7., 0., 1., 1.]);
+        
+        m.value_at(0, 3);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_3x3_matrix_bounds_panic3() {
+        let m = Matrix::with_values(3, 3, vec![-3., 5., 0., 1., -2., -7., 0., 1., 1.]);
+        
+        m.value_at(3, 3);
     }
 
     #[test]
@@ -701,9 +736,9 @@ mod tests {
 
         assert_eq!(a.determinant(), 532.);
         assert_float_eq!(a.cofactor(2, 3)?, -160.);
-        assert_float_eq!(b.value_at(3, 2).unwrap(), -160. / 532.);
+        assert_float_eq!(b.value_at(3, 2), -160. / 532.);
         assert_float_eq!(a.cofactor(3, 2)?, 105.);
-        assert_float_eq!(b.value_at(2, 3).unwrap(), 105. / 532.);
+        assert_float_eq!(b.value_at(2, 3), 105. / 532.);
 
         assert_float_eq!(
             b,
