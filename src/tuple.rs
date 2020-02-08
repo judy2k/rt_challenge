@@ -195,7 +195,7 @@ pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
 
 #[cfg(test)]
 mod tests {
-    use float_cmp::ApproxEqUlps;    
+    use float_cmp::ApproxEqUlps;
     use std::f64::consts::PI;
 
     #[cfg(test)]
@@ -356,9 +356,10 @@ mod tests {
 
     #[test]
     fn test_chained_transformation_calls() {
-        let p = super::point(1., 0., 1.).rotate_x(PI / 2.)
-        .scale(5., 5., 5.)
-        .translate(10., 5., 7.);
+        let p = super::point(1., 0., 1.)
+            .rotate_x(PI / 2.)
+            .scale(5., 5., 5.)
+            .translate(10., 5., 7.);
 
         assert_eq!(p, super::point(15., 0., 7.));
     }

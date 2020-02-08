@@ -33,8 +33,18 @@ impl Matrix {
     }
 
     pub fn value_at(self: &Self, row: usize, col: usize) -> f64 {
-        assert!(row < self.rows, "row ({}) must be less than the number of rows ({})", row, self.rows);
-        assert!(col < self.cols, "col ({}) must be less than the number of cols ({})", col, self.cols);
+        assert!(
+            row < self.rows,
+            "row ({}) must be less than the number of rows ({})",
+            row,
+            self.rows
+        );
+        assert!(
+            col < self.cols,
+            "col ({}) must be less than the number of cols ({})",
+            col,
+            self.cols
+        );
         self.data[self.cols * row + col]
     }
 
@@ -53,15 +63,11 @@ impl Matrix {
     }
 
     fn row(self: &Self, row: usize) -> Vec<f64> {
-        (0..self.cols)
-            .map(|col| self.value_at(row, col))
-            .collect()
+        (0..self.cols).map(|col| self.value_at(row, col)).collect()
     }
 
     fn col(self: &Self, col: usize) -> Vec<f64> {
-        (0..self.rows)
-            .map(|row| self.value_at(row, col))
-            .collect()
+        (0..self.rows).map(|row| self.value_at(row, col)).collect()
     }
 
     #[inline]
@@ -77,12 +83,7 @@ impl Matrix {
         let mut result = Matrix::new(self.cols, self.rows);
         for row in 0..self.rows {
             for col in 0..self.cols {
-                result
-                    .set_value(
-                        col,
-                        row,
-                        self.value_at(row, col),
-                    )
+                result.set_value(col, row, self.value_at(row, col))
             }
         }
         result
@@ -133,8 +134,7 @@ impl Matrix {
                     if col != remove_col {
                         let dest_row = if row < remove_row { row } else { row - 1 };
                         let dest_col = if col < remove_col { col } else { col - 1 };
-                        result
-                            .set_value(dest_row, dest_col, self.value_at(row, col));
+                        result.set_value(dest_row, dest_col, self.value_at(row, col));
                     }
                 }
             }
@@ -294,10 +294,10 @@ impl Matrix {
             4,
             4,
             vec![
-                1., xy, xz, 0.,   // Row 0
-                yx, 1., yz, 0.,   // Row 1
-                zx, zy, 1., 0.,   // Row 2
-                0., 0., 0., 1.,     // Row 3
+                1., xy, xz, 0., // Row 0
+                yx, 1., yz, 0., // Row 1
+                zx, zy, 1., 0., // Row 2
+                0., 0., 0., 1., // Row 3
             ],
         )
     }
@@ -358,10 +358,7 @@ impl Mul for Matrix {
         if self.cols != rhs.rows {
             panic!(
                 "Matrix dimensions ({}, {}) and ({}, {}) are incompatible for multiplication.",
-                self.rows,
-                self.cols,
-                rhs.rows,
-                rhs.cols
+                self.rows, self.cols, rhs.rows, rhs.cols
             );
         }
         let mut result = Matrix::new(self.rows, rhs.cols);
@@ -982,9 +979,10 @@ mod tests {
     #[test]
     fn test_chained_transformation_calls() {
         let p = point(1., 0., 1.);
-        let t = Matrix::identity4().rotate_x(PI / 2.)
-        .scale(5., 5., 5.)
-        .translate(10., 5., 7.);
+        let t = Matrix::identity4()
+            .rotate_x(PI / 2.)
+            .scale(5., 5., 5.)
+            .translate(10., 5., 7.);
 
         assert_eq!(t * p, point(15., 0., 7.));
     }

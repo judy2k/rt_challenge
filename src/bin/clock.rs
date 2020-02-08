@@ -1,16 +1,18 @@
 use rt_challenge::canvas::Canvas;
 use rt_challenge::color::Color;
 use rt_challenge::tuple::point;
+use std::f64::consts::PI;
 use std::fs::File;
 use std::io::Write;
-use std::f64::consts::PI;
 
 fn main() -> std::io::Result<()> {
     let mut c = Canvas::new(400, 400);
 
     let tick_count = 12;
     for tick in 0..tick_count {
-        let p = point(0., 150., 0.).rotate_z(tick as f64/tick_count as f64 * PI*2.).translate(200., 200., 0.);
+        let p = point(0., 150., 0.)
+            .rotate_z(tick as f64 / tick_count as f64 * PI * 2.)
+            .translate(200., 200., 0.);
         let cx = p.x() as i64;
         let cy = p.y() as i64;
         for dx in 0..3 {
