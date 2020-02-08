@@ -9,4 +9,8 @@ you prefer, instead of reading or re-using this code.
 
 ## Hey look, I rendered something
 
-![A projectile's path, modelled with matrix math](tests/projectile.png)
+![A projectile's path, modelled with matrix math](assets/projectile.png)
+
+And here's a clock face, modelled with matrix transformations:
+
+![A clock face, also modelled with matrix math](assets/clock.png)
