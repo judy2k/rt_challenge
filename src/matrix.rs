@@ -3,7 +3,6 @@ use super::tuple::Tuple;
 use anyhow::{anyhow, Result};
 use float_cmp::{ApproxEqUlps, Ulps};
 use std::ops::Mul;
-use std::convert::TryInto;
 
 #[derive(Clone, Debug)]
 pub struct Matrix {
@@ -43,7 +42,7 @@ impl Matrix {
         self.data[self.cols * row + col] = value;
     }
 
-    pub fn identity4() -> Matrix {
+    pub fn identity4() -> Self {
         Matrix::with_values(
             4,
             4,
@@ -172,6 +171,32 @@ impl Matrix {
             Ok(m2)
         }
     }
+
+    pub fn translate(self, x: f64, y: f64, z: f64) -> Self {
+        Self::translation(x, y, z) * self
+    }
+
+    pub fn rotate_x(self, r: f64) -> Self {
+        Self::rotation_x(r) * self
+    }
+
+    pub fn rotate_y(self, r: f64) -> Self {
+        Self::rotation_y(r) * self
+    }
+
+    pub fn rotate_z(self, r: f64) -> Self {
+        Self::rotation_z(r) * self
+    }
+
+    pub fn scale(self, x: f64, y: f64, z: f64) -> Self {
+        Self::scaling(x, y, z) * self
+    }
+
+    pub fn shear(self, xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Self {
+        Self::shearing(xy, xz, yx, yz, zx, zy) * self
+    }
+
+    // FIXME: Need tests for translate, rotate_x, rotate_y, rotate_z, scale & shear.
 
     pub fn translation(x: f64, y: f64, z: f64) -> Self {
         Matrix::with_values(
@@ -432,7 +457,7 @@ mod tests {
     #[should_panic]
     fn test_2x2_matrix_bounds_panic1() {
         let m = Matrix::with_values(2, 2, vec![-3., 5., 1., -2.]);
-        
+
         m.value_at(2, 0);
     }
 
@@ -440,7 +465,7 @@ mod tests {
     #[should_panic]
     fn test_2x2_matrix_bounds_panic2() {
         let m = Matrix::with_values(2, 2, vec![-3., 5., 1., -2.]);
-        
+
         let v = m.value_at(0, 2);
         println!("V is {}", v);
     }
@@ -449,7 +474,7 @@ mod tests {
     #[should_panic]
     fn test_2x2_matrix_bounds_panic3() {
         let m = Matrix::with_values(2, 2, vec![-3., 5., 1., -2.]);
-        
+
         m.value_at(2, 2);
     }
 
@@ -465,7 +490,7 @@ mod tests {
     #[should_panic]
     fn test_3x3_matrix_bounds_panic1() {
         let m = Matrix::with_values(3, 3, vec![-3., 5., 0., 1., -2., -7., 0., 1., 1.]);
-        
+
         m.value_at(3, 0);
     }
 
@@ -473,7 +498,7 @@ mod tests {
     #[should_panic]
     fn test_3x3_matrix_bounds_panic2() {
         let m = Matrix::with_values(3, 3, vec![-3., 5., 0., 1., -2., -7., 0., 1., 1.]);
-        
+
         m.value_at(0, 3);
     }
 
@@ -481,7 +506,7 @@ mod tests {
     #[should_panic]
     fn test_3x3_matrix_bounds_panic3() {
         let m = Matrix::with_values(3, 3, vec![-3., 5., 0., 1., -2., -7., 0., 1., 1.]);
-        
+
         m.value_at(3, 3);
     }
 
@@ -929,13 +954,23 @@ mod tests {
     }
 
     #[test]
-    fn test_chained_transformations() {
+    fn test_chained_transformation_multiplication() {
         let p = point(1., 0., 1.);
         let a = Matrix::rotation_x(PI / 2.);
         let b = Matrix::scaling(5., 5., 5.);
         let c = Matrix::translation(10., 5., 7.);
 
         let t = c * b * a;
+        assert_eq!(t * p, point(15., 0., 7.));
+    }
+
+    #[test]
+    fn test_chained_transformation_calls() {
+        let p = point(1., 0., 1.);
+        let t = Matrix::identity4().rotate_x(PI / 2.)
+        .scale(5., 5., 5.)
+        .translate(10., 5., 7.);
+
         assert_eq!(t * p, point(15., 0., 7.));
     }
 }

@@ -1,7 +1,6 @@
 use crate::matrix::Matrix;
 use crate::roughly::RoughlyEqual;
 use std::cmp::PartialEq;
-use std::convert::TryFrom;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
