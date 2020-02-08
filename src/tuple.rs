@@ -66,6 +66,30 @@ impl Tuple {
             self.x() * other.y() - self.y() * other.x(),
         );
     }
+
+    pub fn rotate_x(self, r: f64) -> Tuple {
+        Matrix::rotation_x(r) * self
+    }
+
+    pub fn rotate_y(self, r: f64) -> Tuple {
+        Matrix::rotation_y(r) * self
+    }
+
+    pub fn rotate_z(self, r: f64) -> Self {
+        Matrix::rotation_z(r) * self
+    }
+
+    pub fn translate(self, x: f64, y: f64, z: f64) -> Self {
+        Matrix::translation(x, y, z) * self
+    }
+
+    pub fn scale(self, x: f64, y: f64, z: f64) -> Self {
+        Matrix::scaling(x, y, z) * self
+    }
+
+    pub fn shear(self, xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Self {
+        Matrix::shearing(xy, xz, yx, yz, zx, zy) * self
+    }
 }
 
 impl From<Matrix> for Tuple {
@@ -171,8 +195,8 @@ pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
 
 #[cfg(test)]
 mod tests {
-    extern crate float_cmp;
-    use float_cmp::ApproxEqUlps;
+    use float_cmp::ApproxEqUlps;    
+    use std::f64::consts::PI;
 
     #[cfg(test)]
     /// Check if two floats are approximately equal
@@ -328,5 +352,14 @@ mod tests {
         let b = super::vector(2., 3., 4.);
         assert_eq!(a.cross(&b), super::vector(-1., 2., -1.));
         assert_eq!(b.cross(&a), super::vector(1., -2., 1.));
+    }
+
+    #[test]
+    fn test_chained_transformation_calls() {
+        let p = super::point(1., 0., 1.).rotate_x(PI / 2.)
+        .scale(5., 5., 5.)
+        .translate(10., 5., 7.);
+
+        assert_eq!(p, super::point(15., 0., 7.));
     }
 }

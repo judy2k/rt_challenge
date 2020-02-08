@@ -375,6 +375,8 @@ impl Mul for Matrix {
     }
 }
 
+// TODO: Do I need Mul implemented for &Matrix as well?
+// FIXME: Should return Self, not Result<Matrix>
 impl Mul for &Matrix {
     type Output = Result<Matrix>;
     fn mul(self: Self, rhs: Self) -> Result<Matrix> {
@@ -405,8 +407,21 @@ impl Mul<Tuple> for Matrix {
     }
 }
 
+impl Mul<&Tuple> for Matrix {
+    type Output = Tuple;
+    fn mul(self: Self, t: &Tuple) -> Tuple {
+        return (self * Matrix::from(t)).into();
+    }
+}
+
 impl From<Tuple> for Matrix {
     fn from(t: Tuple) -> Self {
+        Matrix::with_values(4, 1, vec![t.x(), t.y(), t.z(), t.w()])
+    }
+}
+
+impl From<&Tuple> for Matrix {
+    fn from(t: &Tuple) -> Self {
         Matrix::with_values(4, 1, vec![t.x(), t.y(), t.z(), t.w()])
     }
 }
