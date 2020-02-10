@@ -5,7 +5,13 @@ use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[derive(Copy, Clone)]
-pub struct Tuple(pub [f64; 4]);
+pub struct Tuple([f64; 4]);
+
+#[derive(Copy, Clone)]
+pub struct Point(Tuple);
+
+#[derive(Copy, Clone)]
+pub struct Vector(Tuple);
 
 impl Tuple {
     pub fn new(x: f64, y: f64, z: f64, w: f64) -> Tuple {
@@ -39,56 +45,17 @@ impl Tuple {
     pub fn is_vector(&self) -> bool {
         return self.w() == 0.0;
     }
+}
 
-    #[inline]
-    pub fn magnitude(&self) -> f64 {
-        (self.x().powi(2) + self.y().powi(2) + self.z().powi(2) + self.w().powi(2)).sqrt()
+impl From<Matrix> for Point {
+    fn from(m: Matrix) -> Self {
+        Self(m.into())
     }
+}
 
-    #[inline]
-    pub fn normalize(&self) -> Tuple {
-        Tuple::new(self.x(), self.y(), self.z(), self.w()) / self.magnitude()
-    }
-
-    #[inline]
-    pub fn dot(&self, other: &Self) -> f64 {
-        return self.x() * other.x()
-            + self.y() * other.y()
-            + self.z() * other.z()
-            + self.w() * other.w();
-    }
-
-    #[inline]
-    pub fn cross(&self, other: &Self) -> Tuple {
-        return vector(
-            self.y() * other.z() - self.z() * other.y(),
-            self.z() * other.x() - self.x() * other.z(),
-            self.x() * other.y() - self.y() * other.x(),
-        );
-    }
-
-    pub fn rotate_x(self, r: f64) -> Tuple {
-        Matrix::rotation_x(r) * self
-    }
-
-    pub fn rotate_y(self, r: f64) -> Tuple {
-        Matrix::rotation_y(r) * self
-    }
-
-    pub fn rotate_z(self, r: f64) -> Self {
-        Matrix::rotation_z(r) * self
-    }
-
-    pub fn translate(self, x: f64, y: f64, z: f64) -> Self {
-        Matrix::translation(x, y, z) * self
-    }
-
-    pub fn scale(self, x: f64, y: f64, z: f64) -> Self {
-        Matrix::scaling(x, y, z) * self
-    }
-
-    pub fn shear(self, xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Self {
-        Matrix::shearing(xy, xz, yx, yz, zx, zy) * self
+impl From<Matrix> for Vector {
+    fn from(m: Matrix) -> Self {
+        Self(m.into())
     }
 }
 
@@ -129,6 +96,22 @@ impl Add for Tuple {
     }
 }
 
+impl Add<Vector> for Point {
+    type Output = Self;
+
+    fn add(self, other: Vector) -> Self {
+        Point(self.0 + other.0)
+    }
+}
+
+impl Add for Vector {
+    type Output = Self;
+
+    fn add(self, other: Vector) -> Self {
+        Vector(self.0 + other.0)
+    }
+}
+
 impl Sub for Tuple {
     type Output = Self;
 
@@ -142,6 +125,30 @@ impl Sub for Tuple {
     }
 }
 
+impl Sub<Point> for Point {
+    type Output = Vector;
+
+    fn sub(self, other: Point) -> Vector {
+        Vector(self.0 - other.0)
+    }
+}
+
+impl Sub<Vector> for Point {
+    type Output = Point;
+
+    fn sub(self, other: Vector) -> Point {
+        Point(self.0 - other.0)
+    }
+}
+
+impl Sub<Vector> for Vector {
+    type Output = Vector;
+
+    fn sub(self, other: Vector) -> Vector {
+        Vector(self.0 - other.0)
+    }
+}
+
 impl Mul<f64> for Tuple {
     type Output = Self;
 
@@ -152,6 +159,14 @@ impl Mul<f64> for Tuple {
             self.z() * rhs,
             self.w() * rhs,
         )
+    }
+}
+
+impl Mul<f64> for Vector {
+    type Output = Self;
+
+    fn mul(self, rhs: f64) -> Self {
+        Self(self.0 * rhs)
     }
 }
 
@@ -185,12 +200,178 @@ impl PartialEq for Tuple {
     }
 }
 
-pub fn point(x: f64, y: f64, z: f64) -> Tuple {
-    return Tuple::new(x, y, z, 1.0);
+impl PartialEq for Vector {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
 }
 
-pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
-    return Tuple::new(x, y, z, 0.0);
+impl PartialEq for Point {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+
+impl Point {
+    pub fn new(x: f64, y: f64, z: f64) -> Point {
+        Point(Tuple::new(x, y, z, 1.0))
+    }
+
+    #[inline]
+    pub fn x(&self) -> f64 {
+        self.0.x()
+    }
+
+    #[inline]
+    pub fn y(&self) -> f64 {
+        self.0.y()
+    }
+
+    #[inline]
+    pub fn z(&self) -> f64 {
+        self.0.z()
+    }
+
+    pub fn rotate_x(self, r: f64) -> Self {
+        Matrix::rotation_x(r) * self
+    }
+
+    pub fn rotate_y(self, r: f64) -> Self {
+        Matrix::rotation_y(r) * self
+    }
+
+    pub fn rotate_z(self, r: f64) -> Self {
+        Matrix::rotation_z(r) * self
+    }
+
+    pub fn translate(self, x: f64, y: f64, z: f64) -> Self {
+        Matrix::translation(x, y, z) * self
+    }
+
+    pub fn scale(self, x: f64, y: f64, z: f64) -> Self {
+        Matrix::scaling(x, y, z) * self
+    }
+
+    pub fn shear(self, xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Self {
+        Matrix::shearing(xy, xz, yx, yz, zx, zy) * self
+    }
+}
+
+impl fmt::Debug for Vector {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Vector({:?}, {:?}, {:?})",
+            self.0.x(),
+            self.0.y(),
+            self.0.z()
+        )
+    }
+}
+
+impl fmt::Debug for Point {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Point({:?}, {:?}, {:?})",
+            self.0.x(),
+            self.0.y(),
+            self.0.z()
+        )
+    }
+}
+
+impl Vector {
+    pub fn new(x: f64, y: f64, z: f64) -> Vector {
+        Self(Tuple::new(x, y, z, 0.0))
+    }
+
+    #[inline]
+    pub fn x(&self) -> f64 {
+        self.0.x()
+    }
+
+    #[inline]
+    pub fn y(&self) -> f64 {
+        self.0.y()
+    }
+
+    #[inline]
+    pub fn z(&self) -> f64 {
+        self.0.z()
+    }
+
+    #[inline]
+    pub fn magnitude(&self) -> f64 {
+        (self.0.x().powi(2) + self.0.y().powi(2) + self.0.z().powi(2) + self.0.w().powi(2)).sqrt()
+    }
+
+    #[inline]
+    pub fn normalize(&self) -> Vector {
+        Self(self.0 / self.magnitude())
+    }
+
+    #[inline]
+    pub fn dot(&self, other: &Self) -> f64 {
+        return self.0.x() * other.0.x()
+            + self.0.y() * other.0.y()
+            + self.0.z() * other.0.z()
+            + self.0.w() * other.0.w();
+    }
+
+    #[inline]
+    pub fn cross(&self, other: &Self) -> Vector {
+        return Self::new(
+            self.0.y() * other.0.z() - self.0.z() * other.0.y(),
+            self.0.z() * other.0.x() - self.0.x() * other.0.z(),
+            self.0.x() * other.0.y() - self.0.y() * other.0.x(),
+        );
+    }
+
+    pub fn rotate_x(self, r: f64) -> Self {
+        Matrix::rotation_x(r) * self
+    }
+
+    pub fn rotate_y(self, r: f64) -> Self {
+        Matrix::rotation_y(r) * self
+    }
+
+    pub fn rotate_z(self, r: f64) -> Self {
+        Matrix::rotation_z(r) * self
+    }
+
+    pub fn translate(self, x: f64, y: f64, z: f64) -> Self {
+        Matrix::translation(x, y, z) * self
+    }
+
+    pub fn scale(self, x: f64, y: f64, z: f64) -> Self {
+        Matrix::scaling(x, y, z) * self
+    }
+
+    pub fn shear(self, xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Self {
+        Matrix::shearing(xy, xz, yx, yz, zx, zy) * self
+    }
+}
+
+pub fn point(x: f64, y: f64, z: f64) -> Point {
+    return Point::new(x, y, z);
+}
+
+pub fn vector(x: f64, y: f64, z: f64) -> Vector {
+    return Vector::new(x, y, z);
+}
+
+impl From<Tuple> for Vector {
+    fn from(t: Tuple) -> Self {
+        Self(t)
+    }
+}
+
+impl From<Tuple> for Point {
+    fn from(t: Tuple) -> Self {
+        Self(t)
+    }
 }
 
 #[cfg(test)]
