@@ -1,27 +1,27 @@
 use rt_challenge::canvas::Canvas;
 use rt_challenge::color::Color;
-use rt_challenge::tuple::{point, vector, Tuple};
+use rt_challenge::tuple::{point, vector, Vector, Point};
 use std::fs::File;
 use std::io::Write;
 
 struct Env {
-    gravity: Tuple,
-    wind: Tuple,
+    gravity: Vector,
+    wind: Vector,
 }
 
 impl Env {
-    fn new(gravity: Tuple, wind: Tuple) -> Self {
+    fn new(gravity: Vector, wind: Vector) -> Self {
         return Self { gravity, wind };
     }
 }
 
 struct Projectile {
-    position: Tuple,
-    velocity: Tuple,
+    position: Point,
+    velocity: Vector,
 }
 
 impl Projectile {
-    fn new(position: Tuple, velocity: Tuple) -> Self {
+    fn new(position: Point, velocity: Vector) -> Self {
         return Self { position, velocity };
     }
 }

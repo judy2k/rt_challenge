@@ -1,5 +1,5 @@
 use super::roughly::RoughlyEqual;
-use super::tuple::Tuple;
+use super::tuple::{Vector, Point};
 use anyhow::{anyhow, Result};
 use float_cmp::{ApproxEqUlps, Ulps};
 use std::ops::Mul;
@@ -397,29 +397,29 @@ impl Mul for &Matrix {
     }
 }
 
-impl Mul<Tuple> for Matrix {
-    type Output = Tuple;
-    fn mul(self: Self, t: Tuple) -> Tuple {
+impl Mul<Point> for Matrix {
+    type Output = Point;
+    fn mul(self: Self, t: Self::Output) -> Self::Output {
         return (self * Matrix::from(t)).into();
     }
 }
 
-impl Mul<&Tuple> for Matrix {
-    type Output = Tuple;
-    fn mul(self: Self, t: &Tuple) -> Tuple {
+impl Mul<Vector> for Matrix {
+    type Output = Vector;
+    fn mul(self: Self, t: Self::Output) -> Self::Output {
         return (self * Matrix::from(t)).into();
     }
 }
 
-impl From<Tuple> for Matrix {
-    fn from(t: Tuple) -> Self {
-        Matrix::with_values(4, 1, vec![t.x(), t.y(), t.z(), t.w()])
+impl From<Vector> for Matrix {
+    fn from(t: Vector) -> Self {
+        Matrix::with_values(4, 1, vec![t.x(), t.y(), t.z(), 0.0])
     }
 }
 
-impl From<&Tuple> for Matrix {
-    fn from(t: &Tuple) -> Self {
-        Matrix::with_values(4, 1, vec![t.x(), t.y(), t.z(), t.w()])
+impl From<Point> for Matrix {
+    fn from(t: Point) -> Self {
+        Matrix::with_values(4, 1, vec![t.x(), t.y(), t.z(), 1.0])
     }
 }
 
@@ -606,9 +606,9 @@ mod tests {
                 1., 2., 3., 4., 2., 4., 4., 2., 8., 6., 4., 1., 0., 0., 0., 1.,
             ],
         );
-        let t = Tuple::new(1., 2., 3., 1.);
+        let t = Point::new(1., 2., 3.);
 
-        assert_eq!(m1 * t, Tuple::new(18., 24., 33., 1.));
+        assert_eq!(m1 * t, Point::new(18., 24., 33.));
 
         Ok(())
     }
