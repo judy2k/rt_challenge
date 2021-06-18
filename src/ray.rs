@@ -7,13 +7,13 @@ pub struct Ray {
 
 impl Ray {
     pub fn new(origin: Point, direction: Vector) -> Self {
-        Ray{origin, direction}
+        Ray { origin, direction }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::Ray;
     use crate::tuple::{point, vector};
 
     #[test]

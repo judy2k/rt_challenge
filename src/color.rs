@@ -7,8 +7,8 @@ use float_cmp::ApproxEqUlps;
 pub struct Color(pub [f64; 3]);
 
 impl Color {
-    pub fn new(r: f64, g: f64, b: f64) -> Color {
-        return Color([r, g, b]);
+    pub fn new(r: f64, g: f64, b: f64) -> Self {
+        return Self([r, g, b]);
     }
 
     #[inline]
@@ -31,7 +31,7 @@ impl fmt::Debug for Color {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Color({:?}, {:?}, {:?})",
+            "Color({}, {}, {})",
             self.red(),
             self.green(),
             self.blue(),
@@ -97,45 +97,55 @@ impl Mul<f64> for Color {
 
 #[cfg(test)]
 mod tests {
+    use super::Color;
+
     #[test]
     fn new_color() {
-        let c = super::Color::new(-0.5, 0.4, 1.7);
+        let c = Color::new(-0.5, 0.4, 1.7);
         assert_eq!(c.red(), -0.5);
         assert_eq!(c.green(), 0.4);
         assert_eq!(c.blue(), 1.7);
     }
 
     #[test]
+    fn debug() {
+        assert_eq!(
+            format!("{:?}", Color::new(0.9, 0.6, 0.75)),
+            "Color(0.9, 0.6, 0.75)"
+        );
+    }
+
+    #[test]
     fn compare_colors() {
-        let c1 = super::Color::new(0.9, 0.6, 0.75);
-        let c2 = super::Color::new(0.9, 0.6, 0.75);
+        let c1 = Color::new(0.9, 0.6, 0.75);
+        let c2 = Color::new(0.9, 0.6, 0.75);
         assert_eq!(c1, c2);
     }
 
     #[test]
     fn add_colors() {
-        let c1 = super::Color::new(0.9, 0.6, 0.75);
-        let c2 = super::Color::new(0.7, 0.1, 0.25);
-        assert_eq!(c1 + c2, super::Color::new(1.6, 0.7, 1.0));
+        let c1 = Color::new(0.9, 0.6, 0.75);
+        let c2 = Color::new(0.7, 0.1, 0.25);
+        assert_eq!(c1 + c2, Color::new(1.6, 0.7, 1.0));
     }
 
     #[test]
     fn subtract_colors() {
-        let c1 = super::Color::new(0.9, 0.6, 0.75);
-        let c2 = super::Color::new(0.7, 0.1, 0.25);
-        assert_eq!(c1 - c2, super::Color::new(0.2, 0.5, 0.5));
+        let c1 = Color::new(0.9, 0.6, 0.75);
+        let c2 = Color::new(0.7, 0.1, 0.25);
+        assert_eq!(c1 - c2, Color::new(0.2, 0.5, 0.5));
     }
 
     #[test]
     fn multiply_color_by_scalar() {
-        let c = super::Color::new(0.2, 0.3, 0.4);
-        assert_eq!(c * 2., super::Color::new(0.4, 0.6, 0.8));
+        let c = Color::new(0.2, 0.3, 0.4);
+        assert_eq!(c * 2., Color::new(0.4, 0.6, 0.8));
     }
 
     #[test]
     fn multiply_colors() {
-        let c1 = super::Color::new(1., 0.2, 0.4);
-        let c2 = super::Color::new(0.9, 1., 0.1);
-        assert_eq!(c1 * c2, super::Color::new(0.9, 0.2, 0.04));
+        let c1 = Color::new(1., 0.2, 0.4);
+        let c2 = Color::new(0.9, 1., 0.1);
+        assert_eq!(c1 * c2, Color::new(0.9, 0.2, 0.04));
     }
 }
