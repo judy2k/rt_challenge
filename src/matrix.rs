@@ -1,5 +1,5 @@
 use super::roughly::RoughlyEqual;
-use super::tuple::{Vector, Point};
+use super::tuple::{Point, Vector};
 use anyhow::{anyhow, Result};
 use float_cmp::{ApproxEqUlps, Ulps};
 use std::ops::Mul;
@@ -94,7 +94,7 @@ impl Matrix {
             let mut det: f64 = 0.0;
 
             for col in 0..self.cols {
-                det += self.value_at(0, col) * self.cofactor(0, col).expect("Whaaaat?")
+                det += self.value_at(0, col) * self.cofactor(0, col)
             }
 
             det
@@ -103,29 +103,26 @@ impl Matrix {
         }
     }
 
-    fn submatrix(self: &Self, remove_row: usize, remove_col: usize) -> Result<Matrix> {
+    fn submatrix(self: &Self, remove_row: usize, remove_col: usize) -> Matrix {
         if self.rows == 1 || self.cols == 1 {
-            return Err(anyhow!(
+            panic!(
                 "Cannot generate a submatrix from a {}x{} matrix.",
-                self.rows,
-                self.cols
-            ));
+                self.rows, self.cols
+            );
         }
 
         if remove_row >= self.rows {
-            return Err(anyhow!(
+            panic!(
                 "Cannot remove row {} from a matrix with {} rows.",
-                remove_row,
-                self.rows
-            ));
+                remove_row, self.rows
+            );
         }
 
         if remove_col >= self.cols {
-            return Err(anyhow!(
+            panic!(
                 "Cannot remove col {} from a matrix with {} cols.",
-                remove_col,
-                self.cols
-            ));
+                remove_col, self.cols
+            );
         }
         let mut result = Matrix::new(self.rows - 1, self.cols - 1);
         for row in 0..self.rows {
@@ -139,36 +136,36 @@ impl Matrix {
                 }
             }
         }
-        Ok(result)
+        result
     }
 
-    fn minor(self: &Self, row: usize, col: usize) -> Result<f64> {
-        Ok(self.submatrix(row, col)?.determinant())
+    fn minor(self: &Self, row: usize, col: usize) -> f64 {
+        self.submatrix(row, col).determinant()
     }
 
-    fn cofactor(self: &Self, row: usize, col: usize) -> Result<f64> {
-        Ok(self.minor(row, col)? * if (row + col) % 2 == 1 { -1. } else { 1. })
+    fn cofactor(self: &Self, row: usize, col: usize) -> f64 {
+        self.minor(row, col) * if (row + col) % 2 == 1 { -1. } else { 1. }
     }
 
     fn invertible(self: &Self) -> bool {
         !self.determinant().approx_eq_ulps(&0.0, 2)
     }
 
-    fn inverse(self: &Self) -> Result<Matrix> {
+    fn inverse(self: &Self) -> Matrix {
         if !self.invertible() {
-            Err(anyhow!("Cannot inverse uninvertible matrix."))
+            panic!("Cannot inverse uninvertible matrix.");
         } else {
             let self_determinant = self.determinant();
             let mut m2 = Matrix::new(self.rows, self.cols);
 
             for row in 0..self.rows {
                 for col in 0..self.cols {
-                    let c = self.cofactor(row, col)?;
+                    let c = self.cofactor(row, col);
                     m2.set_value(col, row, c / self_determinant);
                 }
             }
 
-            Ok(m2)
+            m2
         }
     }
 
@@ -670,7 +667,7 @@ mod tests {
         let m1 = Matrix::with_values(3, 3, vec![1., 5., 0., -3., 2., 7., 0., 6., -3.]);
         let expected = Matrix::with_values(2, 2, vec![-3., 2., 0., 6.]);
 
-        assert_eq!(m1.submatrix(0, 2)?, expected);
+        assert_eq!(m1.submatrix(0, 2), expected);
 
         Ok(())
     }
@@ -686,7 +683,7 @@ mod tests {
         );
         let expected = Matrix::with_values(3, 3, vec![-6., 1., 6., -8., 8., 6., -7., -1., 1.]);
 
-        assert_eq!(m1.submatrix(2, 1)?, expected);
+        assert_eq!(m1.submatrix(2, 1), expected);
 
         Ok(())
     }
@@ -694,9 +691,9 @@ mod tests {
     #[test]
     fn test_minor() -> Result<()> {
         let a = Matrix::with_values(3, 3, vec![3., 5., 0., 2., -1., -7., 6., -1., 5.]);
-        let b = a.submatrix(1, 0)?;
+        let b = a.submatrix(1, 0);
         assert_eq!(b.determinant(), 25.);
-        assert_eq!(a.minor(1, 0)?, 25.);
+        assert_eq!(a.minor(1, 0), 25.);
 
         Ok(())
     }
@@ -704,27 +701,25 @@ mod tests {
     #[test]
     fn test_cofactor() -> Result<()> {
         let a = Matrix::with_values(3, 3, vec![3., 5., 0., 2., -1., -7., 6., -1., 5.]);
-        assert_eq!(a.minor(0, 0)?, -12.);
-        assert_eq!(a.cofactor(0, 0)?, -12.);
-        assert_eq!(a.minor(1, 0)?, 25.);
-        assert_eq!(a.cofactor(1, 0)?, -25.);
+        assert_eq!(a.minor(0, 0), -12.);
+        assert_eq!(a.cofactor(0, 0), -12.);
+        assert_eq!(a.minor(1, 0), 25.);
+        assert_eq!(a.cofactor(1, 0), -25.);
 
         Ok(())
     }
 
     #[test]
-    fn test_determinant_3x3() -> Result<()> {
+    fn test_determinant_3x3() {
         let a = Matrix::with_values(3, 3, vec![1., 2., 6., -5., 8., -4., 2., 6., 4.]);
-        assert_eq!(a.cofactor(0, 0)?, 56.);
-        assert_eq!(a.cofactor(0, 1)?, 12.);
-        assert_eq!(a.cofactor(0, 2)?, -46.);
+        assert_eq!(a.cofactor(0, 0), 56.);
+        assert_eq!(a.cofactor(0, 1), 12.);
+        assert_eq!(a.cofactor(0, 2), -46.);
         assert_eq!(a.determinant(), -196.);
-
-        Ok(())
     }
 
     #[test]
-    fn test_determinant_4x4() -> Result<()> {
+    fn test_determinant_4x4() {
         let a = Matrix::with_values(
             4,
             4,
@@ -732,17 +727,15 @@ mod tests {
                 -2., -8., 3., 5., -3., 1., 7., 3., 1., 2., -9., 6., -6., 7., 7., -9.,
             ],
         );
-        assert_eq!(a.cofactor(0, 0)?, 690.);
-        assert_eq!(a.cofactor(0, 1)?, 447.);
-        assert_eq!(a.cofactor(0, 2)?, 210.);
-        assert_eq!(a.cofactor(0, 3)?, 51.);
+        assert_eq!(a.cofactor(0, 0), 690.);
+        assert_eq!(a.cofactor(0, 1), 447.);
+        assert_eq!(a.cofactor(0, 2), 210.);
+        assert_eq!(a.cofactor(0, 3), 51.);
         assert_eq!(a.determinant(), -4071.);
-
-        Ok(())
     }
 
     #[test]
-    fn test_invertible() -> Result<()> {
+    fn test_invertible() {
         let a = Matrix::with_values(
             4,
             4,
@@ -752,12 +745,10 @@ mod tests {
         );
         assert_eq!(a.determinant(), -2120.);
         assert_eq!(a.invertible(), true);
-
-        Ok(())
     }
 
     #[test]
-    fn test_notinvertible() -> Result<()> {
+    fn test_notinvertible() {
         let a = Matrix::with_values(
             4,
             4,
@@ -767,12 +758,10 @@ mod tests {
         );
         assert_eq!(a.determinant(), 0.);
         assert_eq!(a.invertible(), false);
-
-        Ok(())
     }
 
     #[test]
-    fn test_inverse() -> Result<()> {
+    fn test_inverse() {
         let a = Matrix::with_values(
             4,
             4,
@@ -780,12 +769,12 @@ mod tests {
                 -5., 2., 6., -8., 1., -5., 1., 8., 7., 7., -6., -7., 1., -3., 7., 4.,
             ],
         );
-        let b = a.inverse()?;
+        let b = a.inverse();
 
         assert_eq!(a.determinant(), 532.);
-        assert_float_eq!(a.cofactor(2, 3)?, -160.);
+        assert_float_eq!(a.cofactor(2, 3), -160.);
         assert_float_eq!(b.value_at(3, 2), -160. / 532.);
-        assert_float_eq!(a.cofactor(3, 2)?, 105.);
+        assert_float_eq!(a.cofactor(3, 2), 105.);
         assert_float_eq!(b.value_at(2, 3), 105. / 532.);
 
         assert_float_eq!(
@@ -799,8 +788,6 @@ mod tests {
                 ]
             )
         );
-
-        Ok(())
     }
 
     #[test]
@@ -820,7 +807,7 @@ mod tests {
 
     #[test]
     fn test_translation_inverse() {
-        let transform = Matrix::translation(5., -3., 2.).inverse().unwrap();
+        let transform = Matrix::translation(5., -3., 2.).inverse();
         let p = point(-3., 4., 5.);
         assert_eq!(transform * p, point(-8., 7., 3.));
     }
@@ -848,7 +835,7 @@ mod tests {
 
     #[test]
     fn test_scaling_inverse() {
-        let transform = Matrix::scaling(2., 3., 4.).inverse().unwrap();
+        let transform = Matrix::scaling(2., 3., 4.).inverse();
         let v = vector(-4., 6., 8.);
         assert_eq!(transform * v, vector(-2., 2., 2.));
     }
@@ -875,7 +862,7 @@ mod tests {
     #[test]
     fn test_rotation_x_inverse() {
         let p = point(0., 1., 0.);
-        let half_quarter = Matrix::rotation_x(PI / 4.).inverse().unwrap();
+        let half_quarter = Matrix::rotation_x(PI / 4.).inverse();
         assert_eq!(
             half_quarter * p,
             point(0., 2_f64.sqrt() / 2., -2_f64.sqrt() / 2.)

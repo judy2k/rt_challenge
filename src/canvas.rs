@@ -46,42 +46,49 @@ impl Canvas {
     }
 
     pub fn to_ppm(&self) -> String {
+        self.try_to_ppm()
+            .expect("Writing to String should never fail.")
+    }
+
+    pub fn try_to_ppm(&self) -> Result<String, std::fmt::Error> {
         let mut result = String::new();
-        writeln!(&mut result, "P3").unwrap();
+        writeln!(&mut result, "P3")?;
         writeln!(
             &mut result,
             "{width} {height}",
             width = self.width,
             height = self.height
-        )
-        .unwrap();
-        writeln!(&mut result, "255").unwrap();
+        )?;
+        writeln!(&mut result, "255")?;
 
         let mut line = String::with_capacity(self.width() * self.height() * 5);
         for row in 0..self.height() {
             line.clear();
             for col in 0..self.width() {
                 let pix = self.pixel_at(col, row).unwrap();
-                for i in vec![pix.red(), pix.green(), pix.blue()] {
-                    let s = format!("{}", clamp_byte(i));
+                let rgb = vec![pix.red(), pix.green(), pix.blue()];
+                for i in rgb.into_iter() {
+                    let s = clamp_byte(i).to_string();
                     if line.len() + s.len() >= 70 {
-                        writeln!(&mut result, "{}", line).unwrap();
+                        result.write_str(&line)?;
+                        result.write_str("\n")?;
                         line.clear();
-                        write!(&mut line, "{}", s).unwrap();
+                        line.write_str(&s)?;
                     } else {
                         if line.len() > 0 {
-                            write!(&mut line, " ").unwrap();
+                            line.write_str(" ")?;
                         }
-                        write!(&mut line, "{}", s).unwrap();
+                        line.write_str(&s)?;
                     }
                 }
             }
             if line.len() > 0 {
-                writeln!(&mut result, "{}", line).unwrap();
+                result.write_str(&line)?;
+                result.write_str("\n")?;
             }
         }
 
-        return result;
+        return Ok(result);
     }
 }
 
