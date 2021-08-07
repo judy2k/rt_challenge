@@ -1,22 +1,23 @@
 use std::fmt::Debug;
 
-use crate::{intersection::Intersection, ray::Ray};
+use crate::{intersection::Intersectable, intersection::Intersection, ray::Ray, spheres::Sphere};
 
-pub trait Shape: Debug {
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection>;
+#[non_exhaustive]
+#[derive(Debug, PartialEq)]
+pub enum Shape {
+    Sphere(Sphere),
 }
 
-impl PartialEq for dyn Shape {
-    fn eq(&self, _other: &Self) -> bool {
-        false
+impl Intersectable for Shape {
+    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
+        match *self {
+            Shape::Sphere(ref sphere) => sphere.intersect(ray),
+        }
     }
 }
 
-impl<'a, T> Shape for &'a T
-where
-    T: Shape,
-{
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        (*self).intersect(ray)
+impl From<Sphere> for Shape {
+    fn from(a: Sphere) -> Shape {
+        Shape::Sphere(a)
     }
 }

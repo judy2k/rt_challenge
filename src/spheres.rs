@@ -1,9 +1,9 @@
-use crate::intersection::Intersection;
+use crate::intersection::{Intersectable, Intersection};
 use crate::ray::Ray;
 use crate::shapes::Shape;
 use crate::tuple::point;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Sphere {}
 
 impl Sphere {
@@ -12,7 +12,7 @@ impl Sphere {
     }
 }
 
-impl Shape for Sphere {
+impl Intersectable for Sphere {
     fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let sphere_to_ray = ray.origin() - point(0., 0., 0.);
         let a = ray.direction().dot(&ray.direction());
@@ -27,26 +27,11 @@ impl Shape for Sphere {
             let t1 = (-b - discriminant.sqrt()) / (2. * a);
             let t2 = (-b + discriminant.sqrt()) / (2. * a);
 
-            return vec![Intersection::new(t1, self), Intersection::new(t2, self)];
+            return vec![
+                Intersection::new(t1, self.into()),
+                Intersection::new(t2, self),
+            ];
         }
-    }
-}
-
-impl PartialEq for Sphere {
-    fn eq(&self, other: &Sphere) -> bool {
-        true
-    }
-}
-
-impl PartialEq<dyn Shape> for Sphere {
-    fn eq(&self, other: &dyn Shape) -> bool {
-        false
-    }
-}
-
-impl PartialEq<Sphere> for dyn Shape {
-    fn eq(&self, other: &Sphere) -> bool {
-        false
     }
 }
 
@@ -61,7 +46,7 @@ mod tests {
         let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
         let s = Sphere::new();
 
-        let xs = r.intersects(&s);
+        let xs = r.intersects(s.into());
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 4.0);
         assert_eq!(xs[1].t, 6.0);
@@ -72,7 +57,7 @@ mod tests {
         let r = Ray::new(point(0., 1., -5.), vector(0., 0., 1.));
         let s = Sphere::new();
 
-        let xs = r.intersects(&s);
+        let xs = r.intersects(s.into());
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 5.0);
         assert_eq!(xs[1].t, 5.0);
@@ -83,7 +68,7 @@ mod tests {
         let r = Ray::new(point(0., 2., -5.), vector(0., 0., 1.));
         let s = Sphere::new();
 
-        let xs = r.intersects(&s);
+        let xs = r.intersects(s.into());
         assert_eq!(xs.len(), 0);
     }
 
@@ -92,7 +77,7 @@ mod tests {
         let r = Ray::new(point(0., 0., 0.), vector(0., 0., 1.));
         let s = Sphere::new();
 
-        let xs = r.intersects(&s);
+        let xs = r.intersects(s.into());
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -1.0);
         assert_eq!(xs[1].t, 1.0);
@@ -103,7 +88,7 @@ mod tests {
         let r = Ray::new(point(0., 0., 5.), vector(0., 0., 1.));
         let s = Sphere::new();
 
-        let xs = r.intersects(&s);
+        let xs = r.intersects(s.into());
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -6.0);
         assert_eq!(xs[1].t, -4.0);

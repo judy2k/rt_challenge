@@ -1,3 +1,4 @@
+use crate::intersection::Intersectable;
 use crate::intersection::Intersection;
 use crate::shapes::Shape;
 use crate::tuple::{Point, Vector};
@@ -24,10 +25,7 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    pub fn intersects<'a, T>(&'a self, shape: &'a T) -> Vec<Intersection>
-    where
-        T: Shape + Sized,
-    {
+    pub fn intersects(&self, shape: Shape) -> Vec<Intersection> {
         shape.intersect(self)
     }
 }
